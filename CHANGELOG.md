@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5 - 2026-11-16
+
+- Requires `python-amazon-echo` 0.3.2: music alarms and alarms Amazon sends without `alarmTime` now have their time, so the next-alarm sensor sees them.
+
 ## 0.3.4 - 2026-11-16
 
 - `create_timer` now starts the timer on the Echo (it was started on the integration's own app registration). Alexa confirms it out loud; Portuguese and English devices only. Requires `python-amazon-echo` 0.3.1.

@@ -339,11 +339,15 @@ that device.
   one, so `create_alarm` with `alarm_type: music` looks for an existing music
   alarm of the account with that `music_provider` and `music_entity` (create
   it once in the Alexa app; `get_notifications` shows both values) and makes
-  a new alarm with the same station. This is how Alexa Media Player does it;
-  the request was not sent during development.
-- **Audio files as announcements** were tested with ffmpeg and the network
-  mocked, not against a real Echo. The music sleep timer (`extra.timer`) is
-  ported from Alexa Media Player and was not sent either.
+  a new alarm with the same station. This is how Alexa Media Player does it.
+  Verified live on 2026-11-16: a music alarm made by voice (Spotify) was
+  reused to create one on an Echo Plus at the requested date and time.
+- **Audio files as announcements** were run live on 2026-11-16: a Home
+  Assistant text-to-speech file was transcoded by ffmpeg to MP3 (48 kbps,
+  24 kHz), published under `/local/amazon_echo`, reachable through the
+  external HTTPS address, and the Echo Plus recorded the request in its voice
+  history. Whether it was heard was not confirmed by a person. The music sleep
+  timer (`extra.timer`) is ported from Alexa Media Player and was not sent.
 - Alarm and reminder times are read by Amazon in the Echo's own time zone;
   the integration assumes it is the time zone of Home Assistant.
 - A routine button runs the routine without a target device, so routines
@@ -352,9 +356,11 @@ that device.
 - A device that leaves the account and comes back gets its entities again on
   the next reload.
 - **Communication preferences** (Drop In, Announcements, Communications) come
-  from an Amazon service that does not answer for every account. When it
-  fails for a device the three entities are simply not created, and it is
-  asked again three hours later.
+  from an Amazon service that answers HTTP 503 most of the time for some
+  accounts (about nine requests in ten on the test account). Reading and
+  writing them was verified live; when the read fails for a device the three
+  entities are not created yet, and it is asked again after 5 minutes (up to
+  three times), then every three hours.
 - **Alexa Guard** follows what Alexa Media Player does and was not run against
   a real Guard: the test account has none. Amazon retired the free Guard in
   most countries.
