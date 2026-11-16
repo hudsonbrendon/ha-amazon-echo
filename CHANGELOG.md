@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7 - 2026-11-16
+
+- The Fire TV ambient mode switch is created again: Amazon lists the feature but never reports its state, so the switch shows the last value it sent (assumed state). Verified live. Requires `python-amazon-echo` 0.3.4.
+
 ## 0.3.6 - 2026-11-16
 
 - The media player shows Spotify and other external players (title, artist, progress, playing/paused); they were reported as idle. Requires `python-amazon-echo` 0.3.3.

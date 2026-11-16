@@ -158,11 +158,16 @@ SWITCHES: tuple[AmazonEchoSwitchDescription, ...] = (
         key="ambient_mode",
         translation_key="ambient_mode",
         entity_category=EntityCategory.CONFIG,
+        # Amazon lists the feature but does not report its state: the switch
+        # exists when the feature does and keeps the last value it sent.
         exists_fn=lambda data, device: (
             device.endpoint_id is not None
-            and data.endpoint(device, "ambient_mode") is not None
+            and (
+                data.endpoint(device, "ambient_mode_supported") is not None
+                or data.endpoint(device, "ambient_mode") is not None
+            )
         ),
-        is_on_fn=lambda data, device: bool(data.endpoint(device, "ambient_mode")),
+        is_on_fn=lambda data, device: data.endpoint(device, "ambient_mode"),
         set_fn=lambda c, device, enabled: c.client.call_feature(
             device.endpoint_id or "",
             "toggle",
@@ -253,10 +258,18 @@ class AmazonEchoSwitch(AmazonEchoEntity, SwitchEntity):
 
     entity_description: AmazonEchoSwitchDescription
 
+    _sent: bool | None = None
+
     @property
     def is_on(self) -> bool | None:
-        """Current value."""
-        return self.entity_description.is_on_fn(self.data, self.device)
+        """Current value; the last one sent when Amazon reports none."""
+        value = self.entity_description.is_on_fn(self.data, self.device)
+        return self._sent if value is None else value
+
+    @property
+    def assumed_state(self) -> bool:
+        """True while the state shown is only what was last sent."""
+        return self.entity_description.is_on_fn(self.data, self.device) is None
 
     async def _async_set(self, enabled: bool) -> None:
         description = self.entity_description
@@ -265,6 +278,8 @@ class AmazonEchoSwitch(AmazonEchoEntity, SwitchEntity):
             refresh=description.refresh,
             device=self.device,
         )
+        self._sent = enabled
+        self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Enable."""

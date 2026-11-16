@@ -328,8 +328,9 @@ that device.
 - **Speaking rate** is offered from 0.75 to 2.0 in steps of 0.05. The range
   Amazon accepts was not established; a value it refuses raises an error.
 - **Wake word sensitivity** is read-only until its range is known.
-- **Ambient mode** (Fire TV) is written through the generic endpoint feature
-  call and was not verified on a real device.
+- **Ambient mode** (Fire TV) was verified live on a Fire TV Stick 4K Max (the
+  ambient screen opens and closes). Amazon never reports whether it is on, so
+  the switch shows the last value it sent (assumed state).
 - Music with no provider prefix uses the provider id `DEFAULT`.
 - `create_timer` is spoken: Amazon has no API to start a timer on an Echo, so the
   integration types the request with the duration in words and Alexa confirms it
@@ -369,14 +370,18 @@ that device.
 - **Smart-home devices**: the state is what Amazon last heard from the
   device's own cloud, so it can lag; without push it is corrected by the next
   poll. The payload of `setColorTemperature` is inferred, colour temperature
-  is offered from 2200 K to 6500 K. None of the smart-home operations was
-  sent to a real device during development.
+  is offered from 2200 K to 6500 K. Power and brightness were verified live on a Tuya lamp
+  linked to Alexa; colour, colour temperature, mode and lock operations were not
+  sent to a real device.
 - **Amazon Kids**: reading the profiles and the device state was verified;
   switching a device was not. A new child profile is noticed within three
   hours.
 - **Info skills** were verified live (the "time" skill answered on an Echo
-  Plus). **Notifications to the Alexa app** were sent once but nobody checked
-  the phone; the **Echo Show background image** was not sent.
+  Plus). **Notifications to the Alexa app**: Amazon accepts them, but on the
+  test account none reached the phone, whose app registration has no
+  notification types enabled; check the Alexa app's notification permission.
+  **Echo Show background image** does not work any more: Amazon accepts the
+  request and keeps its own background (tried live on an Echo Show 5).
 - Deleting voice history is not offered: the endpoint the other integrations'
   libraries have for it (`/api/activities`) no longer exists.
 - This integration uses Amazon's private app API, which can change without

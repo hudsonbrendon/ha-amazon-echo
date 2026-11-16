@@ -589,3 +589,30 @@ async def test_failed_slow_fetch_is_retried_soon(
     async_fire_time_changed(hass)
     await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.async_entity_ids("todo")
+
+
+async def test_ambient_mode_without_reported_state(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """Fire TV lists ambient mode but never reports it: assumed state."""
+    states = dict(mock_client.get_endpoint_states.return_value)
+    states[FIRE_TV] = {"endpoint_id": "endpoint-firetv", "ambient_mode_supported": True}
+    mock_client.get_endpoint_states.return_value = states
+    await setup_integration(hass, mock_config_entry)
+    entity = "switch.living_room_tv_ambient_mode"
+    state = hass.states.get(entity)
+    assert state is not None
+    assert state.state == "unknown"
+    assert state.attributes.get("assumed_state") is True
+
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": entity}, blocking=True
+    )
+    assert hass.states.get(entity).state == STATE_ON
+    mock_client.call_feature.assert_awaited_with(
+        "endpoint-firetv", "toggle", "turnOn", instance="FTV.AmbientMode"
+    )

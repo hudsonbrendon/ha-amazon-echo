@@ -11,7 +11,7 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/hudsonbrendon/ha-amazon-echo/issues",
   "loggers": ["amazon_echo"],
-  "requirements": ["python-amazon-echo==0.3.3"],
-  "version": "0.3.6",
+  "requirements": ["python-amazon-echo==0.3.4"],
+  "version": "0.3.7",
   "zeroconf": ["_spotify-connect._tcp.local.", "_amzn-wplay._tcp.local."]
 }
