@@ -12,6 +12,7 @@ from amazon_echo import AmazonEchoClient, Credentials
 
 from .const import CONF_CREDENTIALS, DOMAIN, PLATFORMS
 from .coordinator import AmazonEchoCoordinator
+from .entity import account_device_info
 from .services import async_setup_services
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -48,6 +49,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: AmazonEchoConfigEntry) -
     entry.async_on_unload(close)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
+    # Smart-home devices hang off the account device, so it must exist first.
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id, **account_device_info(coordinator)
+    )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await coordinator.async_start()
     return True
@@ -62,6 +67,7 @@ async def async_remove_config_entry_device(
     hass: HomeAssistant, entry: AmazonEchoConfigEntry, device_entry: dr.DeviceEntry
 ) -> bool:
     """Allow removing a device only when the account no longer has it."""
-    current = {(DOMAIN, serial) for serial in entry.runtime_data.data.devices}
+    data = entry.runtime_data.data
+    current = {(DOMAIN, key) for key in (*data.devices, *data.smart_home)}
     current.add((DOMAIN, entry.unique_id or entry.entry_id))
     return not device_entry.identifiers & current

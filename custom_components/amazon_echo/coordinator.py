@@ -19,7 +19,10 @@ from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import (
+    async_track_point_in_utc_time,
+    async_track_time_interval,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 from zeroconf import IPVersion, ServiceStateChange
@@ -32,28 +35,41 @@ from amazon_echo import (
     AmazonEchoNotSupportedError,
     Device,
     EchoList,
+    Endpoint,
     ListItem,
     MediaState,
+    Notification,
     PushClient,
     PushEvent,
     Routine,
+    VoiceRecord,
     is_reachable,
     probe_local,
 )
 
 from .const import (
     ALEXA_MEDIA_DOMAIN,
+    BUS_ALARM_DISMISSED,
+    BUS_LAST_CALLED,
+    BUS_NOTIFICATION,
+    BUS_VOICE_COMMAND,
     CAP_AUDIO_PLAYER,
     CONF_ENABLE_LOCAL,
     CONF_ENABLE_PUSH,
     CONF_HOSTS,
     CONF_SCAN_INTERVAL,
+    CONF_SMART_HOME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    EMULATED_HUE,
+    HA_BRIDGE_MANUFACTURERS,
+    HUE_MANUFACTURER,
     ISSUE_SHARED_SESSION,
+    KIDS_FAMILIES,
     LOCAL_INTERVAL,
     LOGGER,
     PUSH_DOWN_SCAN_INTERVAL,
+    PUSH_SMART_HOME,
     SETTING_KEYS,
     SIGNAL_VOICE,
     SLOW_INTERVAL,
@@ -69,6 +85,7 @@ WRITE_SETTLE_SECONDS = 1.0
 PUSH_DEBOUNCE_SECONDS = 2.0
 SLOW_CONCURRENCY = 4
 FAST_TIMEOUT_SECONDS = 90
+LAST_CALLED_LOOKBACK = timedelta(days=7)
 
 type AccountFetcher = Callable[[AmazonEchoClient], Awaitable[Any]]
 type DeviceFetcher = Callable[[AmazonEchoClient, Device], Awaitable[Any]]
@@ -88,7 +105,10 @@ FAST_FETCHERS: dict[str, AccountFetcher] = {
     "volumes": lambda c: c.get_volumes(),
     "bluetooth": lambda c: c.get_bluetooth(),
     "notifications": lambda c: c.get_notifications(),
+    # One GraphQL answer feeds both (the library shares the request).
     "endpoints": lambda c: c.get_endpoint_states(),
+    "smart_home": lambda c: c.get_smart_home_endpoints(),
+    "guard": lambda c: c.get_guard(),
 }
 SLOW_FETCHERS: dict[str, AccountFetcher] = {
     "alarm_volumes": lambda c: c.get_alarm_volumes(),
@@ -99,6 +119,8 @@ SLOW_FETCHERS: dict[str, AccountFetcher] = {
     "routines": lambda c: c.get_routines(),
     "music_providers": lambda c: c.get_music_providers(),
     "lists": _get_lists,
+    "device_preferences": lambda c: c.get_device_preferences(),
+    "children": lambda c: c.get_children(),
 }
 ACCOUNT_FETCHERS = FAST_FETCHERS | SLOW_FETCHERS
 # Each fetcher fills AmazonEchoData.settings[serial][name]. Names must not
@@ -111,9 +133,14 @@ DEVICE_FETCHERS: dict[str, DeviceFetcher] = {
     "available_wake_words": lambda c, d: c.get_available_wake_words(d),
     "alarm_sounds": lambda c, d: c.get_alarm_sounds(d),
     "alarm_sound": lambda c, d: c.get_default_alarm_sound(d),
+    "comms": lambda c, d: c.get_communication_preferences(d),
+    "kids_mode": lambda c, d: c.get_kids_mode(d),
+    "kids_profile": lambda c, d: c.get_kids_profile(d),
     **{key: lambda c, d, key=key: c.get_setting(d, key) for key in SETTING_KEYS},
 }
 assert not ACCOUNT_FETCHERS.keys() & DEVICE_FETCHERS.keys()
+# Fetchers that only make sense for some device families.
+DEVICE_FETCHER_FAMILIES = {"kids_mode": KIDS_FAMILIES, "kids_profile": KIDS_FAMILIES}
 
 AUDIO_PLAYER_STATES = {"PLAYING": "playing", "INTERRUPTED": "paused"}
 # Push command -> what to fetch again (debounced).
@@ -123,6 +150,8 @@ PUSH_REFETCH = {
     "PUSH_MEDIA_QUEUE_CHANGE": "media",
     "PUSH_MEDIA_PROGRESS_CHANGE": "media",
     "PUSH_CONTENT_FOCUS_CHANGE": "media",
+    "NotifyMediaSessionsUpdated": "media",
+    "NotifyNowPlayingUpdated": "media",
     "PUSH_BLUETOOTH_STATE_CHANGE": "bluetooth",
     "PUSH_NOTIFICATION_CHANGE": "notifications",
     "PUSH_LIST_ITEM_CHANGE": "lists",
@@ -135,7 +164,39 @@ PUSH_IN_PLACE = {
     "PUSH_VOLUME_CHANGE",
     "PUSH_DND_STATE_CHANGE",
     "PUSH_DOPPLER_CONNECTION_CHANGE",
+    PUSH_SMART_HOME,
 }
+DISMISSIBLE = ("ON", "SNOOZED")
+
+
+def notification_as_dict(notification: Notification) -> dict[str, Any]:
+    """Describe an alarm, timer or reminder (action responses and events)."""
+    remaining = notification.remaining
+    return {
+        "id": notification.id,
+        "kind": notification.kind,
+        "status": notification.status,
+        "device_serial": notification.device_serial,
+        "label": notification.label,
+        "when": notification.when.isoformat() if notification.when else None,
+        "remaining": remaining.total_seconds() if remaining else None,
+        "recurrence": notification.recurrence,
+        "sound": notification.sound,
+    }
+
+
+def _just_dismissed(old: Notification, new: Notification) -> bool:
+    """Tell a dismissal from an edit: Amazon bumps the version by exactly one."""
+    try:
+        before, after = int(old.raw["version"]), int(new.raw["version"])
+    except KeyError, TypeError, ValueError:
+        return False
+    return (
+        new.kind in ("alarm", "music_alarm")
+        and old.status in DISMISSIBLE
+        and new.status in ("ON", "OFF")
+        and after == before + 1
+    )
 
 
 class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
@@ -161,6 +222,13 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         )
         self.client = client
         self.push_connected: bool | None = None
+        # Device (serial) that routines without a device of their own run on.
+        self.default_device: str | None = None
+        # serial -> (kind, message, title) of the last speak/announce.
+        self.last_messages: dict[str, tuple[str, str, str | None]] = {}
+        self._smart_home = bool(entry.options.get(CONF_SMART_HOME, False))
+        self._smart_home_fetched = False
+        self._unsub_due: CALLBACK_TYPE | None = None
         self._push: PushClient | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
         self._unsupported: set[tuple[str, str]] = set()
@@ -189,6 +257,10 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         # setting entities appear a little after the rest (added by listener).
         entry.async_create_background_task(
             self.hass, self._async_poll_slow(), f"{DOMAIN}_slow"
+        )
+        # Who answered last, without firing events for what was said before.
+        entry.async_create_background_task(
+            self.hass, self.async_update_last_called(seed=True), f"{DOMAIN}_voice"
         )
         if entry.options.get(CONF_ENABLE_LOCAL, True):
             self._unsubs.append(
@@ -238,6 +310,9 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         )
         while self._unsubs:
             self._unsubs.pop()()
+        if self._unsub_due is not None:
+            self._unsub_due()
+            self._unsub_due = None
         self._push_debouncer.async_shutdown()
         # Cleared first: stopping reports "disconnected", which must not resync.
         push, self._push = self._push, None
@@ -271,6 +346,9 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                         == "playing"
                     )
                 )
+                if not first and not self.push_connected:
+                    # no push to say that a device heard something
+                    await self._async_fetch_voice(data)
         except AmazonEchoAuthenticationError as err:
             raise ConfigEntryAuthFailed(
                 translation_domain=DOMAIN, translation_key="invalid_auth"
@@ -301,6 +379,8 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                     if not device.is_group
                     for key in DEVICE_FETCHERS
                     if (device.serial, key) not in self._unsupported
+                    and device.family
+                    in DEVICE_FETCHER_FAMILIES.get(key, {device.family})
                 ),
             ]
         )
@@ -311,7 +391,13 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         """Fetch one value; only an authentication error is allowed to escape."""
         try:
             if key in ACCOUNT_FETCHERS:
-                setattr(data, key, await ACCOUNT_FETCHERS[key](self.client))
+                value = await ACCOUNT_FETCHERS[key](self.client)
+                if key == "smart_home":
+                    value = self._wanted_endpoints(data, value)
+                previous = data.notifications
+                setattr(data, key, value)
+                if key == "notifications":
+                    self._async_notifications_changed(previous, value)
             elif device is None:
                 return
             elif key == "media":
@@ -343,6 +429,27 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             return
         self.async_update_listeners()
 
+    def _wanted_endpoints(
+        self, data: AmazonEchoData, endpoints: list[Endpoint]
+    ) -> dict[str, Endpoint]:
+        """Keep Amazon's own hardware, and the rest only when asked for.
+
+        What Home Assistant itself bridged to Alexa is never taken back.
+        """
+        self._smart_home_fetched = True
+        bridged = set(HA_BRIDGE_MANUFACTURERS)
+        if EMULATED_HUE in self.hass.config.components:
+            bridged.add(HUE_MANUFACTURER)
+        return {
+            endpoint.id: endpoint
+            for endpoint in endpoints
+            if (endpoint.is_amazon_device and endpoint.serial not in data.devices)
+            or (
+                self._smart_home
+                and (endpoint.manufacturer or "").casefold() not in bridged
+            )
+        }
+
     @callback
     def _async_remove_stale_devices(self, data: AmazonEchoData) -> None:
         """Drop devices that left the Amazon account."""
@@ -351,12 +458,74 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             # that lost everything; removing would also wipe user customisation.
             return
         entry = self.config_entry
-        valid = {(DOMAIN, serial) for serial in data.devices}
+        valid = {(DOMAIN, key) for key in (*data.devices, *data.smart_home)}
         valid.add((DOMAIN, entry.unique_id or entry.entry_id))
         registry = dr.async_get(self.hass)
         for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+            # Smart-home devices are the ones attached to the account device;
+            # without a smart-home answer nothing can be said about them.
+            if device.via_device_id and not self._smart_home_fetched:
+                continue
             if not device.identifiers & valid:
                 registry.async_remove_device(device.id)
+
+    # ------------------------------------------------------------------ #
+    # Alarms, timers and reminders: events on the bus
+    # ------------------------------------------------------------------ #
+    def _notification_event(self, notification: Notification) -> dict[str, Any]:
+        device = (
+            self.data.devices.get(notification.device_serial) if self.data else None
+        )
+        return {
+            **notification_as_dict(notification),
+            "device_id": self._device_id(notification.device_serial),
+            "name": device.name if device else None,
+        }
+
+    def _device_id(self, serial: str | None) -> str | None:
+        """Home Assistant device id of an Amazon serial number."""
+        entry = dr.async_get(self.hass).async_get_device(
+            identifiers={(DOMAIN, serial or "")}
+        )
+        return entry.id if entry else None
+
+    @callback
+    def _async_notifications_changed(
+        self, previous: list[Notification], current: list[Notification]
+    ) -> None:
+        """Fire the dismissal event and re-arm the "it is due" event."""
+        before = {notification.id: notification for notification in previous}
+        for notification in current:
+            old = before.get(notification.id)
+            if old is not None and _just_dismissed(old, notification):
+                self.hass.bus.async_fire(
+                    BUS_ALARM_DISMISSED, self._notification_event(notification)
+                )
+        self._async_schedule_due(current)
+
+    @callback
+    def _async_schedule_due(self, notifications: list[Notification]) -> None:
+        """Fire an event when the next alarm, timer or reminder goes off."""
+        if self._unsub_due is not None:
+            self._unsub_due()
+            self._unsub_due = None
+        now = dt_util.utcnow()
+        upcoming = [n for n in notifications if n.is_active and n.when and n.when > now]
+        if not upcoming:
+            return
+        when = min(n.when for n in upcoming if n.when)
+
+        @callback
+        def due(_now: datetime) -> None:
+            self._unsub_due = None
+            for notification in upcoming:
+                if notification.when == when:
+                    self.hass.bus.async_fire(
+                        BUS_NOTIFICATION, self._notification_event(notification)
+                    )
+            self._async_schedule_due(self.data.notifications)
+
+        self._unsub_due = async_track_point_in_utc_time(self.hass, due, when)
 
     # ------------------------------------------------------------------ #
     # Push
@@ -386,7 +555,9 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         device = data.devices.get(serial) if serial else None
         if event.command == "PUSH_VOLUME_CHANGE" and serial:
             if (volume := payload.get("volumeSetting")) is not None:
-                data.volumes[serial] = (int(volume), bool(payload.get("isMuted")))
+                self.async_set_volume(serial, int(volume), bool(payload.get("isMuted")))
+        elif event.command == PUSH_SMART_HOME:
+            self._async_apply_endpoint_update(payload)
         elif event.command == "PUSH_DND_STATE_CHANGE" and serial:
             if "enabled" in payload:
                 data.dnd[serial] = bool(payload["enabled"])
@@ -407,11 +578,13 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
 
         if refetch := PUSH_REFETCH.get(event.command):
             if refetch == "media":
-                self._pending.update(
-                    ("media", target)
-                    for target in (serial, *(device.parent_clusters if device else ()))
-                    if target
+                # an event that names no device is about whatever is playing
+                targets = (
+                    (serial, *(device.parent_clusters if device else ()))
+                    if serial
+                    else tuple(s for s, m in data.media.items() if m.state != "idle")
                 )
+                self._pending.update(("media", target) for target in targets)
             else:
                 self._pending.add((refetch, None))
             self._push_debouncer.async_schedule_call()
@@ -441,11 +614,54 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             return
         self._async_pushed()
 
-    async def _async_fetch_voice(self) -> None:
-        """Fire the voice event for interactions newer than the last one seen."""
+    @callback
+    def _async_apply_endpoint_update(self, payload: dict[str, Any]) -> None:
+        """Apply a pushed smart-home state change to the snapshot."""
+        if (update := self.client.parse_endpoint_update(payload)) is None:
+            return
+        endpoint_id, values = update
+        data = self.data
+        if (endpoint := data.smart_home.get(endpoint_id)) is not None:
+            endpoint.state.update(values)
+            return
+        for state in data.endpoints.values():
+            if state.get("endpoint_id") == endpoint_id:
+                state.update(values)
+
+    @callback
+    def async_set_volume(self, serial: str, volume: int, muted: bool = False) -> None:
+        """Store a volume, remembering the one it replaces."""
+        volumes = self.data.volumes
+        if (old := volumes.get(serial)) is not None and old[0] != volume:
+            self.data.previous_volumes[serial] = old[0]
+        volumes[serial] = (volume, muted)
+
+    def _voice_event(self, record: VoiceRecord) -> dict[str, Any]:
+        device = self.data.devices.get(record.device_serial or "")
+        return {
+            "device_id": self._device_id(record.device_serial),
+            "serial": record.device_serial,
+            "name": device.name if device else None,
+            "timestamp": record.timestamp.isoformat(),
+            "utterance": record.utterance,
+            "response": record.response,
+            "intent": record.intent,
+            "person": record.person,
+        }
+
+    async def _async_fetch_voice(
+        self, data: AmazonEchoData | None = None, *, seed: bool = False
+    ) -> None:
+        """Fire the voice events for interactions newer than the last one seen.
+
+        With ``seed`` nothing is fired: the last interaction of the past week
+        only tells which device was called last.
+        """
+        data = data or self.data
+        since = dt_util.utcnow() - LAST_CALLED_LOOKBACK if seed else self._last_voice
         try:
             records = await self.client.get_voice_history(
-                since=self._last_voice, limit=5
+                since=since, limit=1 if seed else 5
             )
         except AmazonEchoAuthenticationError:
             raise
@@ -453,12 +669,27 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             LOGGER.debug("Could not fetch the voice history: %s", err)
             return
         for record in sorted(records, key=lambda r: r.timestamp):
-            if record.timestamp <= self._last_voice:
+            previous = data.last_called
+            if previous is None or record.timestamp > previous.timestamp:
+                data.last_called = record
+            if seed or record.timestamp <= self._last_voice:
                 continue
             self._last_voice = record.timestamp
             async_dispatcher_send(
                 self.hass, f"{SIGNAL_VOICE}_{self.config_entry.entry_id}", record
             )
+            self.hass.bus.async_fire(BUS_VOICE_COMMAND, self._voice_event(record))
+            if previous is None or previous.device_serial != record.device_serial:
+                self.hass.bus.async_fire(BUS_LAST_CALLED, self._voice_event(record))
+
+    async def async_update_last_called(self, *, seed: bool = False) -> None:
+        """Read the voice history now (action, startup)."""
+        try:
+            await self._async_fetch_voice(seed=seed)
+        except AmazonEchoAuthenticationError:
+            self.config_entry.async_start_reauth(self.hass)
+            return
+        self.async_update_listeners()
 
     # ------------------------------------------------------------------ #
     # Local network
@@ -592,6 +823,54 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             ) from err
         self.async_update_listeners()
         return result
+
+    async def async_call_endpoint(
+        self,
+        endpoint: Endpoint,
+        feature: str,
+        operation: str,
+        *,
+        instance: str | None = None,
+        payload: dict[str, Any] | None = None,
+        state: dict[str, Any] | None = None,
+    ) -> None:
+        """Run a smart-home operation; ``state`` is what it leaves behind.
+
+        ponytail: the state is applied at once and confirmed by push or by the
+        next poll. Reading it back right away costs the whole endpoint list
+        and often returns what the device's own cloud has not updated yet.
+        """
+        await self.async_write(
+            self.client.call_feature(
+                endpoint.id, feature, operation, instance=instance, payload=payload
+            )
+        )
+        endpoint.state.update(state or {})
+        self.async_update_listeners()
+
+    async def async_say(
+        self,
+        kind: str,
+        devices: list[Device],
+        message: str,
+        title: str | None = None,
+        method: str = "all",
+    ) -> None:
+        """Speak (``speak``) or announce (``announce``) and remember it."""
+        if kind == "speak":
+            await self.async_write(self.client.speak(devices[0], message))
+        else:
+            await self.async_write(
+                self.client.announce(devices, message, title=title, method=method)
+            )
+        for device in devices:
+            self.last_messages[device.serial] = (kind, message, title)
+        self.async_update_listeners()
+
+    async def set_kids_mode(self, device: Device, child_id: str | None) -> None:
+        """Put a device in Amazon Kids mode for a child, or take it out (None)."""
+        await self.client.set_kids_mode(device, child_id)
+        self.data.settings.setdefault(device.serial, {})["kids_profile"] = child_id
 
     def routine(self, name_or_id: str) -> Routine:
         """Find a routine by id or (case-insensitive) name."""

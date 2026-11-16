@@ -59,6 +59,7 @@ class AmazonEchoVoiceEvent(AmazonEchoEntity, EventEntity):
                 "response": record.response,
                 "intent": record.intent,
                 "person": record.person,
+                "person_type": record.person_type,
             },
         )
         self.async_write_ha_state()

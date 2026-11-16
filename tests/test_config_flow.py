@@ -31,6 +31,7 @@ from custom_components.amazon_echo.const import (
     CONF_ENTRY,
     CONF_HOSTS,
     CONF_SCAN_INTERVAL,
+    CONF_SMART_HOME,
     DOMAIN,
 )
 
@@ -455,6 +456,7 @@ async def test_options_flow(
         CONF_SCAN_INTERVAL: 120,
         CONF_ENABLE_PUSH: False,
         CONF_ENABLE_LOCAL: False,
+        CONF_SMART_HOME: False,  # opt-in: nothing is imported unless asked for
     }
     # Reloaded with the new options: no push, no LAN probing, 120 s polling.
     coordinator = mock_config_entry.runtime_data

@@ -73,6 +73,16 @@ async def test_every_action_is_registered(hass: HomeAssistant) -> None:
         "bluetooth_connect",
         "bluetooth_disconnect",
         "call_feature",
+        "send_info_skill",
+        "send_mobile_push",
+        "send_drop_in_notification",
+        "send_announcement",
+        "enable_alarm",
+        "disable_alarm",
+        "skip_next_alarm",
+        "update_last_called",
+        "restore_volume",
+        "repeat_last_message",
     }
 
 

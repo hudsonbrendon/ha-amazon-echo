@@ -1,4 +1,4 @@
-"""Selects: wake word, alarm sound, AUX direction and time format."""
+"""Selects: wake word, alarm sound, AUX, time format, Drop In, default device."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from amazon_echo import Device
 
@@ -17,6 +18,7 @@ from . import AmazonEchoConfigEntry
 from .coordinator import AmazonEchoCoordinator
 from .data import AmazonEchoData
 from .entity import AmazonEchoEntity, async_add_device_entities
+from .media_player import is_player
 
 PARALLEL_UPDATES = 0
 
@@ -46,6 +48,11 @@ def _select_alarm_sound(c: AmazonEchoCoordinator, device: Device, option: str) -
 def _aux(data: AmazonEchoData, device: Device) -> Any:
     ports = data.setting(device, "aux")
     return ports[0] if ports else None
+
+
+def _select_child(c: AmazonEchoCoordinator, device: Device, option: str) -> Any:
+    child_id = next(key for key, name in c.data.children.items() if name == option)
+    return c.set_kids_mode(device, child_id)
 
 
 SELECTS: tuple[AmazonEchoSelectDescription, ...] = (
@@ -102,6 +109,39 @@ SELECTS: tuple[AmazonEchoSelectDescription, ...] = (
         ),
         refresh="timeFormat",
     ),
+    AmazonEchoSelectDescription(
+        key="drop_in",
+        translation_key="drop_in",
+        entity_category=EntityCategory.CONFIG,
+        options=["all", "home", "off"],
+        exists_fn=lambda data, device: (
+            "drop_in" in (data.setting(device, "comms") or {})
+        ),
+        current_fn=lambda data, device: data.setting(device, "comms")["drop_in"],
+        select_fn=lambda c, device, option: c.client.set_drop_in(device, option),
+        refresh="comms",
+    ),
+    AmazonEchoSelectDescription(
+        key="amazon_kids_profile",
+        translation_key="amazon_kids_profile",
+        entity_category=EntityCategory.CONFIG,
+        exists_fn=lambda data, device: (
+            bool(data.children) and data.setting(device, "kids_mode") is not None
+        ),
+        options_fn=lambda data, device: list(data.children.values()),
+        current_fn=lambda data, device: data.children.get(
+            data.setting(device, "kids_profile") or ""
+        ),
+        select_fn=_select_child,
+        refresh="kids_mode",
+    ),
+)
+
+
+DEFAULT_DEVICE = SelectEntityDescription(
+    key="default_device",
+    translation_key="default_device",
+    entity_category=EntityCategory.CONFIG,
 )
 
 
@@ -112,6 +152,9 @@ async def async_setup_entry(
 ) -> None:
     """Create the selects."""
     async_add_device_entities(entry, async_add_entities, SELECTS, AmazonEchoSelect)
+    async_add_entities(
+        [AmazonEchoDefaultDeviceSelect(entry.runtime_data, DEFAULT_DEVICE)]
+    )
 
 
 class AmazonEchoSelect(AmazonEchoEntity, SelectEntity):
@@ -141,3 +184,40 @@ class AmazonEchoSelect(AmazonEchoEntity, SelectEntity):
             refresh=description.refresh,
             device=self.device,
         )
+
+
+class AmazonEchoDefaultDeviceSelect(AmazonEchoEntity, SelectEntity, RestoreEntity):
+    """The device that routines run on when they have none of their own.
+
+    A routine started by voice acts on "the device that heard it"; started
+    from a button there is no such device, so this one stands in. The choice
+    lives in Home Assistant (restored on restart), not at Amazon.
+    """
+
+    async def async_added_to_hass(self) -> None:
+        """Restore the last choice."""
+        await super().async_added_to_hass()
+        last = await self.async_get_last_state()
+        if last is not None and last.state in self.options:
+            self.coordinator.default_device = self._serial_of(last.state)
+
+    def _serial_of(self, name: str) -> str | None:
+        return next(
+            (d.serial for d in self.data.devices.values() if d.name == name), None
+        )
+
+    @property
+    def options(self) -> list[str]:
+        """Every device that can play something."""
+        return sorted(d.name for d in self.data.devices.values() if is_player(d))
+
+    @property
+    def current_option(self) -> str | None:
+        """Name of the chosen device, None while none is chosen."""
+        device = self.data.devices.get(self.coordinator.default_device or "")
+        return device.name if device else None
+
+    async def async_select_option(self, option: str) -> None:
+        """Choose the device."""
+        self.coordinator.default_device = self._serial_of(option)
+        self.async_write_ha_state()

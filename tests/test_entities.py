@@ -77,6 +77,9 @@ async def test_entities_follow_what_each_device_reports(hass: HomeAssistant) -> 
         "switch.ascending_alarm",
         "switch.wake_word_sound",
         "switch.end_of_request_sound",
+        "switch.communications",
+        "switch.announcements",
+        "switch.amazon_kids",
         "number.bass",
         "number.mid",
         "number.treble",
@@ -84,6 +87,8 @@ async def test_entities_follow_what_each_device_reports(hass: HomeAssistant) -> 
         "select.wake_word",
         "select.alarm_sound",
         "select.aux_direction",
+        "select.drop_in",
+        "select.amazon_kids_profile",
         "sensor.next_alarm",
         "sensor.next_timer",
         "sensor.next_reminder",
@@ -92,6 +97,7 @@ async def test_entities_follow_what_each_device_reports(hass: HomeAssistant) -> 
         "sensor.ip_address",
         "sensor.bluetooth_device",
         "sensor.spotify_user",
+        "sensor.time_zone",
         "binary_sensor.online",
         "binary_sensor.local_reachable",
         "binary_sensor.aux_plugged",
@@ -109,8 +115,25 @@ async def test_entities_follow_what_each_device_reports(hass: HomeAssistant) -> 
         "select.time_format",
         "sensor.time_zone",
         "sensor.wake_word_sensitivity",
+        # Echo Show display settings.
+        "switch.display_power",
+        "switch.adaptive_brightness",
+        "number.display_brightness",
+        # Sensors the Show reports through its GraphQL endpoint.
+        "sensor.illuminance",
+        "sensor.humidity",
+        "binary_sensor.motion",
+        "switch.amazon_kids",
+        "select.amazon_kids_profile",
     }
-    assert not by_device[SHOW] & {"number.bass", "sensor.temperature", "sensor.battery"}
+    assert not by_device[SHOW] & {
+        "number.bass",
+        "sensor.temperature",
+        "sensor.battery",
+        "sensor.pm25",
+        "select.drop_in",
+        "switch.communications",
+    }
     assert by_device[FIRE_TV] == {
         "media_player.media_player",
         "notify.speak",
@@ -127,8 +150,12 @@ async def test_entities_follow_what_each_device_reports(hass: HomeAssistant) -> 
         "media_player.media_player",
         "notify.announce",
     }
+    # No Guard on this account: no alarm panel. No smart-home devices either.
     assert by_device[CUSTOMER_ID] == {
         "binary_sensor.push_connected",
+        "sensor.last_called",
+        "select.default_device",
+        "notify.speak_last_called",
         "switch.whisper_mode",
         "switch.adaptive_volume",
         "button.routine_routine-1",
@@ -373,7 +400,10 @@ async def test_notify(hass: HomeAssistant, mock_client: MagicMock) -> None:
     )
     targets, text = mock_client.announce.await_args.args
     assert [d.serial for d in targets] == [ECHO] and text == "Dinner"
-    assert mock_client.announce.await_args.kwargs == {"title": "Kitchen"}
+    assert mock_client.announce.await_args.kwargs == {
+        "title": "Kitchen",
+        "method": "all",
+    }
 
     # A group announces on its members.
     await _call(

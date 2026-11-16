@@ -93,8 +93,9 @@ class AmazonEchoRoutineButton(AmazonEchoEntity, ButtonEntity):
         return super().available and self._routine is not None
 
     async def async_press(self) -> None:
-        """Run the routine on its own device."""
+        """Run the routine on its own device, else on the default device."""
         if (routine := self._routine) is not None:
+            default = self.data.devices.get(self.coordinator.default_device or "")
             await self.coordinator.async_write(
-                self.coordinator.client.run_routine(routine)
+                self.coordinator.client.run_routine(routine, default)
             )

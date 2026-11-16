@@ -77,17 +77,24 @@
         "data": {
           "scan_interval": "Polling interval",
           "enable_push": "Receive changes by push",
-          "enable_local": "Probe devices on the local network"
+          "enable_local": "Probe devices on the local network",
+          "smart_home": "Alexa smart-home devices"
         },
         "data_description": {
           "scan_interval": "Only a fallback while push is connected. When push is down the account is polled every 60 seconds.",
           "enable_push": "Volume, playback, do not disturb, alarms and voice commands arrive as they happen. Not available while Alexa Media Player is set up and this account uses its imported session.",
-          "enable_local": "IP address, local reachability and Spotify user, read from the device itself every 60 seconds."
+          "enable_local": "IP address, local reachability and Spotify user, read from the device itself every 60 seconds.",
+          "smart_home": "Creates lights, switches, sensors and locks for the smart-home devices linked to your Alexa account. Leave it off if those devices are already in Home Assistant through their own integrations. Echo Glow and the Air Quality Monitor are always added."
         }
       }
     }
   },
   "entity": {
+    "alarm_control_panel": {
+      "guard": {
+        "name": "Alexa Guard"
+      }
+    },
     "binary_sensor": {
       "online": {
         "name": "Online"
@@ -103,6 +110,12 @@
       },
       "charging": {
         "name": "Charging"
+      },
+      "motion": {
+        "name": "Motion"
+      },
+      "contact": {
+        "name": "Contact"
       }
     },
     "button": {
@@ -131,6 +144,9 @@
       },
       "announce": {
         "name": "Announce"
+      },
+      "speak_last_called": {
+        "name": "Speak on the last called device"
       }
     },
     "number": {
@@ -148,6 +164,9 @@
       },
       "speaking_rate": {
         "name": "Speaking rate"
+      },
+      "display_brightness": {
+        "name": "Display brightness"
       }
     },
     "select": {
@@ -170,6 +189,20 @@
           "12_hours": "12 hours",
           "24_hours": "24 hours"
         }
+      },
+      "drop_in": {
+        "name": "Drop In",
+        "state": {
+          "all": "All contacts",
+          "home": "My household",
+          "off": "Off"
+        }
+      },
+      "default_device": {
+        "name": "Default device for routines"
+      },
+      "amazon_kids_profile": {
+        "name": "Amazon Kids profile"
       }
     },
     "sensor": {
@@ -208,6 +241,30 @@
       },
       "wake_word_sensitivity": {
         "name": "Wake word sensitivity"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "illuminance": {
+        "name": "Illuminance"
+      },
+      "pm25": {
+        "name": "PM2.5"
+      },
+      "pm10": {
+        "name": "PM10"
+      },
+      "co": {
+        "name": "Carbon monoxide"
+      },
+      "voc": {
+        "name": "Volatile organic compounds"
+      },
+      "air_quality": {
+        "name": "Air quality index"
+      },
+      "last_called": {
+        "name": "Last called device"
       }
     },
     "switch": {
@@ -252,6 +309,24 @@
       },
       "adaptive_volume": {
         "name": "Adaptive volume"
+      },
+      "communications": {
+        "name": "Communications"
+      },
+      "announcements": {
+        "name": "Announcements"
+      },
+      "display_power": {
+        "name": "Display"
+      },
+      "adaptive_brightness": {
+        "name": "Adaptive brightness"
+      },
+      "aqm_led": {
+        "name": "Indicator light"
+      },
+      "amazon_kids": {
+        "name": "Amazon Kids"
       }
     },
     "todo": {
@@ -468,6 +543,180 @@
           "description": "Optional arguments of the operation."
         }
       }
+    },
+    "send_info_skill": {
+      "name": "Send info skill",
+      "description": "Makes Alexa tell something on a device: the weather, the traffic, a joke...",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that speaks."
+        },
+        "skill": {
+          "name": "Skill",
+          "description": "What Alexa tells."
+        }
+      }
+    },
+    "send_mobile_push": {
+      "name": "Send mobile push",
+      "description": "Sends a notification to the Alexa app on the phones of the account.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account, or the account."
+        },
+        "message": {
+          "name": "Message",
+          "description": "Text of the notification."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Optional title of the notification."
+        }
+      }
+    },
+    "send_drop_in_notification": {
+      "name": "Send Drop In notification",
+      "description": "Sends an Alexa app notification that opens the Drop In dialog when tapped.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account, or the account."
+        },
+        "message": {
+          "name": "Message",
+          "description": "Text of the notification."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Optional title of the notification."
+        }
+      }
+    },
+    "send_announcement": {
+      "name": "Send announcement",
+      "description": "Announces a message on several devices at once, spoken, shown on screen or both.",
+      "fields": {
+        "device_id": {
+          "name": "Devices",
+          "description": "The devices that announce."
+        },
+        "message": {
+          "name": "Message",
+          "description": "What is announced."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Optional title shown on devices with a screen."
+        },
+        "method": {
+          "name": "Method",
+          "description": "Speak and show, only speak, or only show."
+        }
+      }
+    },
+    "enable_alarm": {
+      "name": "Enable alarm",
+      "description": "Turns an alarm on; it rings at its next occurrence.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account."
+        },
+        "notification_id": {
+          "name": "Alarm ID",
+          "description": "Identifier from the next alarm sensor or from the get notifications action."
+        }
+      }
+    },
+    "disable_alarm": {
+      "name": "Disable alarm",
+      "description": "Turns an alarm off without deleting it.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account."
+        },
+        "notification_id": {
+          "name": "Alarm ID",
+          "description": "Identifier from the next alarm sensor or from the get notifications action."
+        }
+      }
+    },
+    "skip_next_alarm": {
+      "name": "Skip next alarm",
+      "description": "Skips the next occurrence of a repeating alarm.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account."
+        },
+        "notification_id": {
+          "name": "Alarm ID",
+          "description": "Identifier from the next alarm sensor or from the get notifications action."
+        }
+      }
+    },
+    "update_last_called": {
+      "name": "Update last called device",
+      "description": "Reads the voice history now and updates the last called device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account, or the account."
+        }
+      }
+    },
+    "restore_volume": {
+      "name": "Restore volume",
+      "description": "Sets a device back to the volume it had before its last change.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device whose volume is restored."
+        }
+      }
+    },
+    "repeat_last_message": {
+      "name": "Repeat last message",
+      "description": "Speaks or announces again the last message Home Assistant sent to a device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that repeats."
+        }
+      }
+    }
+  },
+  "selector": {
+    "info_skill": {
+      "options": {
+        "calendar_today": "Today's calendar",
+        "calendar_tomorrow": "Tomorrow's calendar",
+        "calendar_next": "Next calendar event",
+        "date": "Date",
+        "time": "Time",
+        "national_news": "National news",
+        "flash_briefing": "Flash briefing",
+        "traffic": "Traffic",
+        "weather": "Weather",
+        "clean_up": "Clean up",
+        "good_morning": "Good morning",
+        "sing_a_song": "Sing a song",
+        "fun_fact": "Fun fact",
+        "joke": "Joke",
+        "tell_story": "Tell a story",
+        "im_home": "I'm home",
+        "good_night": "Good night"
+      }
+    },
+    "announcement_method": {
+      "options": {
+        "all": "Speak and show",
+        "speak": "Only speak",
+        "show": "Only show"
+      }
     }
   },
   "issues": {
@@ -511,13 +760,25 @@
       "message": "This device has no endpoint. Provide an endpoint ID."
     },
     "unsupported_media_type": {
-      "message": "Media type {media_type} is not supported. Use music, routine, sound, skill, text_command or tts."
+      "message": "Media type {media_type} is not supported. Use music, routine, sound, skill, text_command, tts, sequence or image."
     },
     "item_not_found": {
       "message": "Item {item} is no longer on the list."
     },
     "invalid_value": {
       "message": "Invalid value: {error}"
+    },
+    "unlock_not_supported": {
+      "message": "Amazon does not allow unlocking this lock from the app."
+    },
+    "no_last_called": {
+      "message": "No device has been called yet."
+    },
+    "no_previous_volume": {
+      "message": "This device has no earlier volume to go back to."
+    },
+    "no_last_message": {
+      "message": "Home Assistant has not sent a message to this device yet."
     }
   }
 }

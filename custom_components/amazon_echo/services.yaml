@@ -184,3 +184,156 @@ call_feature:
     payload:
       selector:
         object:
+
+send_info_skill:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    skill:
+      required: true
+      example: weather
+      selector:
+        select:
+          translation_key: info_skill
+          options:
+            - calendar_today
+            - calendar_tomorrow
+            - calendar_next
+            - date
+            - time
+            - national_news
+            - flash_briefing
+            - traffic
+            - weather
+            - clean_up
+            - good_morning
+            - sing_a_song
+            - fun_fact
+            - joke
+            - tell_story
+            - im_home
+            - good_night
+
+send_mobile_push:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    message:
+      required: true
+      example: "The washing machine is done"
+      selector:
+        text:
+    title:
+      example: Laundry
+      selector:
+        text:
+
+send_drop_in_notification:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    message:
+      required: true
+      example: "The washing machine is done"
+      selector:
+        text:
+    title:
+      example: Laundry
+      selector:
+        text:
+
+send_announcement:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+          multiple: true
+    message:
+      required: true
+      example: "The washing machine is done"
+      selector:
+        text:
+    title:
+      example: Laundry
+      selector:
+        text:
+    method:
+      default: all
+      selector:
+        select:
+          translation_key: announcement_method
+          options:
+            - all
+            - speak
+            - show
+
+enable_alarm:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    notification_id:
+      required: true
+      selector:
+        text:
+
+disable_alarm:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    notification_id:
+      required: true
+      selector:
+        text:
+
+skip_next_alarm:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    notification_id:
+      required: true
+      selector:
+        text:
+
+update_last_called:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+
+restore_volume:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+
+repeat_last_message:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo

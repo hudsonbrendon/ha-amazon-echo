@@ -6,10 +6,15 @@ import json
 from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.json import ExtendedJSONEncoder
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.amazon_echo.diagnostics import async_get_config_entry_diagnostics
+from custom_components.amazon_echo.const import DOMAIN
+from custom_components.amazon_echo.diagnostics import (
+    async_get_config_entry_diagnostics,
+    async_get_device_diagnostics,
+)
 
 from .conftest import (
     APP,
@@ -18,6 +23,7 @@ from .conftest import (
     ECHO,
     ECHO_HOST,
     ECHO_MAC,
+    ENTRY_ID,
     FIRE_TV,
     GROUP,
     SHOW,
@@ -87,3 +93,31 @@ async def test_diagnostics_are_redacted(
         {"kind": "todo", "items": 0},
         {"kind": "custom", "items": 0},
     ]
+
+
+async def test_device_diagnostics(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    await setup_integration(hass, mock_config_entry)
+    registry = dr.async_get(hass)
+    echo = registry.async_get_device_by_identifier((DOMAIN, ECHO), ENTRY_ID)
+    diagnostics = await async_get_device_diagnostics(hass, mock_config_entry, echo)
+    dump = json.dumps(diagnostics, cls=ExtendedJSONEncoder)
+    for secret in SECRETS:
+        assert secret not in dump, secret
+    # Only this device, with everything known about it.
+    assert diagnostics["devices"]["name"] == "Kitchen Echo"
+    assert "AUDIO_PLAYER" in diagnostics["devices"]["capabilities"]
+    assert diagnostics["dnd"] is False
+    assert diagnostics["volumes"] == (40, False)
+    assert diagnostics["endpoints"]["temperature"] == 24.5
+    assert diagnostics["settings"]["comms"]["drop_in"] == "home"
+    assert "Office Show" not in dump
+
+    # The account device has no rows of its own.
+    account = registry.async_get_device_by_identifier((DOMAIN, CUSTOMER_ID), ENTRY_ID)
+    assert await async_get_device_diagnostics(hass, mock_config_entry, account) == {}

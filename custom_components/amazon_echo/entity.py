@@ -15,7 +15,7 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from amazon_echo import Device
+from amazon_echo import Device, Endpoint
 
 from .const import DOMAIN, MANUFACTURER
 from .coordinator import AmazonEchoCoordinator
@@ -49,6 +49,21 @@ def account_device_info(coordinator: AmazonEchoCoordinator) -> DeviceInfo:
         manufacturer=MANUFACTURER,
         name=entry.title,
         entry_type=DeviceEntryType.SERVICE,
+    )
+
+
+def endpoint_device_info(
+    coordinator: AmazonEchoCoordinator, endpoint: Endpoint
+) -> DeviceInfo:
+    """Describe a smart-home device, attached to the account device."""
+    entry = coordinator.config_entry
+    return DeviceInfo(
+        identifiers={(DOMAIN, endpoint.id)},
+        manufacturer=endpoint.manufacturer,
+        name=endpoint.name,
+        model=endpoint.model or endpoint.category.replace("_", " ").capitalize(),
+        serial_number=endpoint.serial,
+        via_device=(DOMAIN, entry.unique_id or entry.entry_id),
     )
 
 
@@ -98,6 +113,64 @@ class AmazonEchoEntity(CoordinatorEntity[AmazonEchoCoordinator]):
         return known and (self._local or super().available)
 
 
+class AmazonEchoEndpointEntity(CoordinatorEntity[AmazonEchoCoordinator]):
+    """Entity of a smart-home endpoint (lamp, plug, sensor, lock)."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: AmazonEchoCoordinator,
+        description: EntityDescription,
+        endpoint_id: str,
+    ) -> None:
+        """Bind the entity to its endpoint."""
+        super().__init__(coordinator)
+        self.entity_description = description
+        self._endpoint_id = endpoint_id
+        self._endpoint = coordinator.data.smart_home[endpoint_id]
+        self._attr_unique_id = f"{endpoint_id}_{description.key}"
+        self._attr_device_info = endpoint_device_info(coordinator, self._endpoint)
+
+    @property
+    def endpoint(self) -> Endpoint:
+        """The endpoint of this entity (last known one if it left the account)."""
+        smart_home = self.coordinator.data.smart_home
+        self._endpoint = smart_home.get(self._endpoint_id, self._endpoint)
+        return self._endpoint
+
+    def value(self, key: str) -> Any:
+        """A state value of the endpoint (None when Amazon cannot read it)."""
+        return self.endpoint.state.get(key)
+
+    @property
+    def available(self) -> bool:
+        """Unavailable when the endpoint is gone or Amazon cannot reach it."""
+        return (
+            super().available
+            and self._endpoint_id in self.coordinator.data.smart_home
+            and self.value("reachable") is not False
+        )
+
+    async def _async_call(
+        self,
+        feature: str,
+        operation: str,
+        *,
+        instance: str | None = None,
+        payload: dict[str, Any] | None = None,
+        state: dict[str, Any] | None = None,
+    ) -> None:
+        await self.coordinator.async_call_endpoint(
+            self.endpoint,
+            feature,
+            operation,
+            instance=instance,
+            payload=payload,
+            state=state,
+        )
+
+
 @callback
 def async_add_dynamic(
     entry: AmazonEchoConfigEntry,
@@ -139,6 +212,28 @@ def async_add_device_entities(
             for device in data.devices.values()
             for description in descriptions
             if description.exists_fn(data, device)
+        ),
+        lambda key: entity_cls(entry.runtime_data, by_key[key[1]], key[0]),
+    )
+
+
+@callback
+def async_add_endpoint_entities(
+    entry: AmazonEchoConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+    descriptions: Sequence[Any],
+    entity_cls: Callable[[AmazonEchoCoordinator, Any, str], Entity],
+) -> None:
+    """Create smart-home entities for the descriptions each endpoint supports."""
+    by_key = {description.key: description for description in descriptions}
+    async_add_dynamic(
+        entry,
+        async_add_entities,
+        lambda data: (
+            (endpoint.id, description.key)
+            for endpoint in data.smart_home.values()
+            for description in descriptions
+            if description.exists_fn(endpoint)
         ),
         lambda key: entity_cls(entry.runtime_data, by_key[key[1]], key[0]),
     )

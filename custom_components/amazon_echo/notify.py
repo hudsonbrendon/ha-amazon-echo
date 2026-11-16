@@ -1,4 +1,4 @@
-"""Notify entities: speak on a device, announce (with a chime and a title)."""
+"""Notify entities: speak, announce, speak on the device that was called last."""
 
 from __future__ import annotations
 
@@ -8,15 +8,20 @@ from homeassistant.components.notify import (
     NotifyEntityFeature,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import AmazonEchoConfigEntry
+from .const import DOMAIN
 from .entity import AmazonEchoEntity, async_add_dynamic
 
 PARALLEL_UPDATES = 0
 
 SPEAK = NotifyEntityDescription(key="speak", translation_key="speak")
 ANNOUNCE = NotifyEntityDescription(key="announce", translation_key="announce")
+SPEAK_LAST_CALLED = NotifyEntityDescription(
+    key="speak_last_called", translation_key="speak_last_called"
+)
 
 
 async def async_setup_entry(
@@ -38,6 +43,7 @@ async def async_setup_entry(
         lambda data: data.devices,
         lambda serial: AmazonEchoAnnounce(coordinator, ANNOUNCE, serial),
     )
+    async_add_entities([AmazonEchoSpeakLastCalled(coordinator, SPEAK_LAST_CALLED)])
 
 
 class AmazonEchoSpeak(AmazonEchoEntity, NotifyEntity):
@@ -45,9 +51,7 @@ class AmazonEchoSpeak(AmazonEchoEntity, NotifyEntity):
 
     async def async_send_message(self, message: str, title: str | None = None) -> None:
         """Speak the message."""
-        await self.coordinator.async_write(
-            self.coordinator.client.speak(self.device, message)
-        )
+        await self.coordinator.async_say("speak", [self.device], message)
 
 
 class AmazonEchoAnnounce(AmazonEchoEntity, NotifyEntity):
@@ -63,6 +67,18 @@ class AmazonEchoAnnounce(AmazonEchoEntity, NotifyEntity):
             for serial in self.device.cluster_members
             if serial in devices
         ] or [self.device]
-        await self.coordinator.async_write(
-            self.coordinator.client.announce(targets, message, title=title)
-        )
+        await self.coordinator.async_say("announce", targets, message, title)
+
+
+class AmazonEchoSpeakLastCalled(AmazonEchoEntity, NotifyEntity):
+    """Answer on whichever device heard the last voice request (account device)."""
+
+    async def async_send_message(self, message: str, title: str | None = None) -> None:
+        """Speak the message on the device that was called last."""
+        record = self.data.last_called
+        device = self.data.devices.get((record.device_serial or "") if record else "")
+        if device is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="no_last_called"
+            )
+        await self.coordinator.async_say("speak", [device], message)

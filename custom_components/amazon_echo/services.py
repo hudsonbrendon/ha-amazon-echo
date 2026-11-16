@@ -1,9 +1,9 @@
-"""Integration actions: voice commands, sounds, routines, alarms, Bluetooth..."""
+"""Integration actions: voice commands, pushes, routines, alarms, Bluetooth..."""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import (
@@ -19,6 +19,7 @@ from homeassistant.util import dt as dt_util
 import voluptuous as vol
 
 from amazon_echo import Device, Notification
+from amazon_echo.const import INFO_SKILLS
 
 from .const import (
     ATTR_ADDRESS,
@@ -29,15 +30,19 @@ from .const import (
     ATTR_INSTANCE,
     ATTR_LABEL,
     ATTR_LIMIT,
+    ATTR_MESSAGE,
+    ATTR_METHOD,
     ATTR_NOTIFICATION_ID,
     ATTR_OPERATION,
     ATTR_PAYLOAD,
     ATTR_RECURRENCE,
     ATTR_ROUTINE,
+    ATTR_SKILL,
     ATTR_SKILL_ID,
     ATTR_SOUND,
     ATTR_TEXT,
     ATTR_TIME,
+    ATTR_TITLE,
     DOMAIN,
     SERVICE_BLUETOOTH_CONNECT,
     SERVICE_BLUETOOTH_DISCONNECT,
@@ -46,18 +51,31 @@ from .const import (
     SERVICE_CREATE_REMINDER,
     SERVICE_CREATE_TIMER,
     SERVICE_DELETE_NOTIFICATION,
+    SERVICE_DISABLE_ALARM,
+    SERVICE_ENABLE_ALARM,
     SERVICE_GET_NOTIFICATIONS,
     SERVICE_GET_VOICE_HISTORY,
     SERVICE_LAUNCH_SKILL,
     SERVICE_PLAY_SOUND,
+    SERVICE_REPEAT_LAST_MESSAGE,
+    SERVICE_RESTORE_VOLUME,
     SERVICE_RUN_ROUTINE,
+    SERVICE_SEND_ANNOUNCEMENT,
+    SERVICE_SEND_DROP_IN_NOTIFICATION,
+    SERVICE_SEND_INFO_SKILL,
+    SERVICE_SEND_MOBILE_PUSH,
     SERVICE_SEND_TEXT_COMMAND,
+    SERVICE_SKIP_NEXT_ALARM,
+    SERVICE_UPDATE_LAST_CALLED,
 )
+from .coordinator import notification_as_dict
 
 if TYPE_CHECKING:
     from .coordinator import AmazonEchoCoordinator
 
 DEVICE = {vol.Required(ATTR_DEVICE_ID): cv.string}
+MESSAGE = {vol.Required(ATTR_MESSAGE): cv.string, vol.Optional(ATTR_TITLE): cv.string}
+NOTIFICATION = vol.Schema({**DEVICE, vol.Required(ATTR_NOTIFICATION_ID): cv.string})
 
 SCHEMAS: dict[str, vol.Schema] = {
     SERVICE_SEND_TEXT_COMMAND: vol.Schema(
@@ -115,6 +133,24 @@ SCHEMAS: dict[str, vol.Schema] = {
             vol.Optional(ATTR_PAYLOAD): dict,
         }
     ),
+    SERVICE_SEND_INFO_SKILL: vol.Schema(
+        {**DEVICE, vol.Required(ATTR_SKILL): vol.In(INFO_SKILLS)}
+    ),
+    SERVICE_SEND_MOBILE_PUSH: vol.Schema({**DEVICE, **MESSAGE}),
+    SERVICE_SEND_DROP_IN_NOTIFICATION: vol.Schema({**DEVICE, **MESSAGE}),
+    SERVICE_SEND_ANNOUNCEMENT: vol.Schema(
+        {
+            vol.Required(ATTR_DEVICE_ID): vol.All(cv.ensure_list, [cv.string]),
+            **MESSAGE,
+            vol.Optional(ATTR_METHOD, default="all"): vol.In(("all", "speak", "show")),
+        }
+    ),
+    SERVICE_ENABLE_ALARM: NOTIFICATION,
+    SERVICE_DISABLE_ALARM: NOTIFICATION,
+    SERVICE_SKIP_NEXT_ALARM: NOTIFICATION,
+    SERVICE_UPDATE_LAST_CALLED: vol.Schema(DEVICE),
+    SERVICE_RESTORE_VOLUME: vol.Schema(DEVICE),
+    SERVICE_REPEAT_LAST_MESSAGE: vol.Schema(DEVICE),
 }
 RESPONSES = {
     SERVICE_CREATE_ALARM: SupportsResponse.OPTIONAL,
@@ -133,14 +169,12 @@ def _error(key: str, **placeholders: str) -> ServiceValidationError:
     )
 
 
-def _resolve(
-    hass: HomeAssistant, call: ServiceCall
-) -> tuple[AmazonEchoCoordinator, Device | None]:
-    """Return the coordinator and device behind ``device_id``.
+def _identify(hass: HomeAssistant, device_id: str) -> tuple[AmazonEchoCoordinator, str]:
+    """Return the coordinator and Amazon identifier behind a device id.
 
-    The device is None when the account (service) device was picked.
+    The identifier is a serial number, a smart-home endpoint id or the
+    account's own id.
     """
-    device_id: str = call.data[ATTR_DEVICE_ID]
     device_entry = dr.async_get(hass).async_get(device_id)
     entry = (
         hass.config_entries.async_get_entry(device_entry.config_entry_id)
@@ -152,8 +186,21 @@ def _resolve(
     if entry.state is not ConfigEntryState.LOADED:
         raise _error("entry_not_loaded", device_id=device_id)
     coordinator: AmazonEchoCoordinator = entry.runtime_data
-    serial = next(i[1] for i in device_entry.identifiers if i[0] == DOMAIN)
-    return coordinator, coordinator.data.devices.get(serial)
+    return coordinator, next(i[1] for i in device_entry.identifiers if i[0] == DOMAIN)
+
+
+def _resolve(
+    hass: HomeAssistant, call: ServiceCall
+) -> tuple[AmazonEchoCoordinator, Device | None]:
+    """Return the coordinator and device behind ``device_id``.
+
+    The device is None when the account (service) device was picked.
+    """
+    coordinator, identifier = _identify(hass, call.data[ATTR_DEVICE_ID])
+    if identifier in coordinator.data.smart_home:
+        # a lamp or a plug cannot speak, ring or run a routine
+        raise _error("device_required")
+    return coordinator, coordinator.data.devices.get(identifier)
 
 
 def _resolve_device(
@@ -166,19 +213,13 @@ def _resolve_device(
     return coordinator, device
 
 
-def _notification(notification: Notification) -> dict[str, Any]:
-    remaining = notification.remaining
-    return {
-        "id": notification.id,
-        "kind": notification.kind,
-        "status": notification.status,
-        "device_serial": notification.device_serial,
-        "label": notification.label,
-        "when": notification.when.isoformat() if notification.when else None,
-        "remaining": remaining.total_seconds() if remaining else None,
-        "recurrence": notification.recurrence,
-        "sound": notification.sound,
-    }
+def _find(coordinator: AmazonEchoCoordinator, call: ServiceCall) -> Notification:
+    """Return the alarm, timer or reminder named by ``notification_id``."""
+    wanted = call.data[ATTR_NOTIFICATION_ID]
+    for notification in coordinator.data.notifications:
+        if notification.id == wanted:
+            return notification
+    raise _error("notification_not_found", notification_id=wanted)
 
 
 def _local(value: datetime) -> datetime:
@@ -217,7 +258,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
             ),
             refresh="notifications",
         )
-        return _notification(created) if call.return_response else None
+        return notification_as_dict(created) if call.return_response else None
 
     async def create_timer(call: ServiceCall) -> ServiceResponse:
         c, device = _resolve_device(hass, call)
@@ -227,7 +268,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
             ),
             refresh="notifications",
         )
-        return _notification(created) if call.return_response else None
+        return notification_as_dict(created) if call.return_response else None
 
     async def create_reminder(call: ServiceCall) -> ServiceResponse:
         c, device = _resolve_device(hass, call)
@@ -237,23 +278,37 @@ def async_setup_services(hass: HomeAssistant) -> None:
             ),
             refresh="notifications",
         )
-        return _notification(created) if call.return_response else None
+        return notification_as_dict(created) if call.return_response else None
 
     async def delete_notification(call: ServiceCall) -> None:
         c, _ = _resolve(hass, call)
-        wanted = call.data[ATTR_NOTIFICATION_ID]
-        found = next((n for n in c.data.notifications if n.id == wanted), None)
-        if found is None:
-            raise _error("notification_not_found", notification_id=wanted)
         await c.async_write(
-            c.client.delete_notification(found), refresh="notifications"
+            c.client.delete_notification(_find(c, call)), refresh="notifications"
+        )
+
+    async def enable_alarm(call: ServiceCall) -> None:
+        c, _ = _resolve(hass, call)
+        await c.async_write(
+            c.client.enable_alarm(_find(c, call)), refresh="notifications"
+        )
+
+    async def disable_alarm(call: ServiceCall) -> None:
+        c, _ = _resolve(hass, call)
+        await c.async_write(
+            c.client.disable_alarm(_find(c, call)), refresh="notifications"
+        )
+
+    async def skip_next_alarm(call: ServiceCall) -> None:
+        c, _ = _resolve(hass, call)
+        await c.async_write(
+            c.client.skip_next_alarm(_find(c, call)), refresh="notifications"
         )
 
     async def get_notifications(call: ServiceCall) -> ServiceResponse:
         c, device = _resolve(hass, call)
         return {
             "notifications": [
-                _notification(n)
+                notification_as_dict(n)
                 for n in c.data.notifications
                 if device is None or n.device_serial == device.serial
             ]
@@ -302,10 +357,69 @@ def async_setup_services(hass: HomeAssistant) -> None:
         c, device = _resolve_device(hass, call)
         await c.async_write(c.client.bluetooth_disconnect(device), refresh="bluetooth")
 
-    async def call_feature(call: ServiceCall) -> None:
+    async def send_info_skill(call: ServiceCall) -> None:
+        c, device = _resolve_device(hass, call)
+        await c.async_write(c.client.info_skill(device, call.data[ATTR_SKILL]))
+
+    async def send_mobile_push(call: ServiceCall) -> None:
         c, device = _resolve(hass, call)
-        endpoint_id = call.data.get(ATTR_ENDPOINT_ID) or (
-            device.endpoint_id if device else None
+        await c.async_write(
+            c.client.send_mobile_push(
+                call.data[ATTR_MESSAGE], title=call.data.get(ATTR_TITLE), device=device
+            )
+        )
+
+    async def send_drop_in_notification(call: ServiceCall) -> None:
+        c, _ = _resolve(hass, call)
+        await c.async_write(
+            c.client.send_drop_in_notification(
+                call.data[ATTR_MESSAGE], title=call.data.get(ATTR_TITLE)
+            )
+        )
+
+    async def send_announcement(call: ServiceCall) -> None:
+        """One announcement for every picked device (per Amazon account)."""
+        targets: dict[AmazonEchoCoordinator, list[Device]] = {}
+        for device_id in call.data[ATTR_DEVICE_ID]:
+            c, identifier = _identify(hass, device_id)
+            if (device := c.data.devices.get(identifier)) is None:
+                raise _error("device_required")
+            targets.setdefault(c, []).append(device)
+        for c, devices in targets.items():
+            await c.async_say(
+                "announce",
+                devices,
+                call.data[ATTR_MESSAGE],
+                call.data.get(ATTR_TITLE),
+                call.data[ATTR_METHOD],
+            )
+
+    async def update_last_called(call: ServiceCall) -> None:
+        c, _ = _resolve(hass, call)
+        await c.async_update_last_called()
+
+    async def restore_volume(call: ServiceCall) -> None:
+        c, device = _resolve_device(hass, call)
+        if (volume := c.data.previous_volumes.get(device.serial)) is None:
+            raise _error("no_previous_volume")
+        await c.async_write(c.client.set_volume(device, volume))
+        c.async_set_volume(device.serial, volume)
+        c.async_update_listeners()
+
+    async def repeat_last_message(call: ServiceCall) -> None:
+        c, device = _resolve_device(hass, call)
+        if (last := c.last_messages.get(device.serial)) is None:
+            raise _error("no_last_message")
+        kind, message, title = last
+        await c.async_say(kind, [device], message, title)
+
+    async def call_feature(call: ServiceCall) -> None:
+        c, identifier = _identify(hass, call.data[ATTR_DEVICE_ID])
+        device = c.data.devices.get(identifier)
+        endpoint_id = (
+            call.data.get(ATTR_ENDPOINT_ID)
+            or (device.endpoint_id if device else None)
+            or (identifier if identifier in c.data.smart_home else None)
         )
         if not endpoint_id:
             raise _error("no_endpoint")
@@ -333,6 +447,16 @@ def async_setup_services(hass: HomeAssistant) -> None:
         (SERVICE_BLUETOOTH_CONNECT, bluetooth_connect),
         (SERVICE_BLUETOOTH_DISCONNECT, bluetooth_disconnect),
         (SERVICE_CALL_FEATURE, call_feature),
+        (SERVICE_SEND_INFO_SKILL, send_info_skill),
+        (SERVICE_SEND_MOBILE_PUSH, send_mobile_push),
+        (SERVICE_SEND_DROP_IN_NOTIFICATION, send_drop_in_notification),
+        (SERVICE_SEND_ANNOUNCEMENT, send_announcement),
+        (SERVICE_ENABLE_ALARM, enable_alarm),
+        (SERVICE_DISABLE_ALARM, disable_alarm),
+        (SERVICE_SKIP_NEXT_ALARM, skip_next_alarm),
+        (SERVICE_UPDATE_LAST_CALLED, update_last_called),
+        (SERVICE_RESTORE_VOLUME, restore_volume),
+        (SERVICE_REPEAT_LAST_MESSAGE, repeat_last_message),
     ):
         hass.services.async_register(
             DOMAIN,

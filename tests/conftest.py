@@ -64,6 +64,9 @@ SHOW_SETTINGS: dict[str, Any] = {
     "alexaCaptions": "ENABLED",
     "alexaGestures": True,
     "alexaSpeakingRate": 1.0,
+    "adaptiveBrightness": "OFF",
+    "brightness": 60,
+    "displayPower": "ON",
     "deviceNightMode": {
         "nightModeEnablement": "ENABLED",
         "nightModeType": "AUTOMATIC",
@@ -293,8 +296,26 @@ def mock_client() -> Generator[MagicMock]:
         "get_wake_words": {ECHO: "ALEXA", SHOW: "ECHO"},
         "get_ascending_alarms": {ECHO: True, SHOW: False},
         "get_endpoint_states": {
-            ECHO: {"temperature": 24.5},
+            ECHO: {"temperature": 24.5, "endpoint_id": "endpoint-echo"},
+            SHOW: {
+                "endpoint_id": "endpoint-show",
+                "illuminance": 120.0,
+                "humidity": 48.0,
+                "motion": True,
+            },
             FIRE_TV: {"remote_battery": 55, "ambient_mode": True},
+        },
+        # No smart-home devices and no Guard unless a test adds them.
+        "get_smart_home_endpoints": [],
+        "get_guard": None,
+        "get_children": {"child-1": "Ana", "child-2": "Bia"},
+        "parse_endpoint_update": None,
+        "get_device_preferences": {
+            ECHO: {
+                "locale": "pt-BR",
+                "time_zone": "America/Sao_Paulo",
+                "temperature_scale": "CELSIUS",
+            }
         },
         "get_whisper_mode": False,
         "get_adaptive_volume": True,
@@ -362,6 +383,12 @@ def mock_client() -> Generator[MagicMock]:
     )
     per_device("get_alarm_sounds", {ECHO: {"sound-1": "Simple", "sound-2": "Nimble"}})
     per_device("get_default_alarm_sound", {ECHO: "sound-1"})
+    per_device(
+        "get_communication_preferences",
+        {ECHO: {"communications": True, "announcements": False, "drop_in": "home"}},
+    )
+    per_device("get_kids_mode", {ECHO: False, SHOW: True})
+    per_device("get_kids_profile", {ECHO: None, SHOW: "child-2"})
 
     def get_setting(device: Device, key: str) -> Any:
         if device.serial != SHOW or key not in SHOW_SETTINGS:
@@ -401,6 +428,19 @@ def mock_client() -> Generator[MagicMock]:
         "update_list_item",
         "delete_list_item",
         "call_feature",
+        "set_communications",
+        "set_announcements",
+        "set_drop_in",
+        "set_background_image",
+        "send_sequence",
+        "info_skill",
+        "send_mobile_push",
+        "send_drop_in_notification",
+        "enable_alarm",
+        "disable_alarm",
+        "skip_next_alarm",
+        "set_guard",
+        "set_kids_mode",
     ):
         getattr(client, name).return_value = None
     created = build_notifications()[0]

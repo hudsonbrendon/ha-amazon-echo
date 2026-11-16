@@ -1,4 +1,4 @@
-"""Numbers: equalizer, alarm volume and speaking rate."""
+"""Numbers: equalizer, alarm volume, speaking rate and display brightness."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from .entity import AmazonEchoEntity, async_add_device_entities
 PARALLEL_UPDATES = 0
 
 SPEAKING_RATE = "alexaSpeakingRate"
+BRIGHTNESS = "brightness"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -88,6 +89,23 @@ NUMBERS: tuple[AmazonEchoNumberDescription, ...] = (
             device, SPEAKING_RATE, value
         ),
         refresh=SPEAKING_RATE,
+    ),
+    AmazonEchoNumberDescription(
+        key="display_brightness",
+        translation_key="display_brightness",
+        entity_category=EntityCategory.CONFIG,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        exists_fn=lambda data, device: isinstance(
+            data.setting(device, BRIGHTNESS), int | float
+        ),
+        value_fn=lambda data, device: data.setting(device, BRIGHTNESS),
+        set_fn=lambda c, device, value: c.client.set_setting(
+            device, BRIGHTNESS, int(value)
+        ),
+        refresh=BRIGHTNESS,
     ),
 )
 

@@ -11,11 +11,14 @@ from amazon_echo import (
     BluetoothDevice,
     Device,
     EchoList,
+    Endpoint,
+    Guard,
     ListItem,
     LocalInfo,
     MediaState,
     Notification,
     Routine,
+    VoiceRecord,
 )
 
 
@@ -32,6 +35,13 @@ class AmazonEchoData:
     notifications: list[Notification] = field(default_factory=list)
     endpoints: dict[str, dict[str, Any]] = field(default_factory=dict)
     media: dict[str, MediaState] = field(default_factory=dict)
+    # Smart-home endpoints by endpoint id: Amazon hardware without a
+    # microphone always, everything else only with the option turned on.
+    smart_home: dict[str, Endpoint] = field(default_factory=dict)
+    guard: Guard | None = None
+    last_called: VoiceRecord | None = None
+    # Volume a device had before its last change.
+    previous_volumes: dict[str, int] = field(default_factory=dict)
 
     # Slow tier, account wide.
     alarm_volumes: dict[str, int] = field(default_factory=dict)
@@ -42,6 +52,9 @@ class AmazonEchoData:
     routines: list[Routine] = field(default_factory=list)
     music_providers: dict[str, str] = field(default_factory=dict)
     lists: dict[str, tuple[EchoList, list[ListItem]]] = field(default_factory=dict)
+    device_preferences: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # Child profiles of the household (Amazon Kids): id -> first name.
+    children: dict[str, str] = field(default_factory=dict)
 
     # Slow tier, per device: serial -> {fetcher or setting key: value}.
     settings: dict[str, dict[str, Any]] = field(default_factory=dict)

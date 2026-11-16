@@ -1,4 +1,4 @@
-"""Sensors: next alarm/timer/reminder, temperature, network, batteries."""
+"""Sensors: next alarm/timer/reminder, environment, network, last called."""
 
 from __future__ import annotations
 
@@ -13,19 +13,31 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTemperature
+from homeassistant.const import (
+    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    CONCENTRATION_PARTS_PER_MILLION,
+    LIGHT_LUX,
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.util import dt as dt_util
 
-from amazon_echo import Device, Notification
+from amazon_echo import Device, Endpoint, Notification
 
 from . import AmazonEchoConfigEntry
 from .const import CAP_REMINDERS, CAP_TIMERS_AND_ALARMS
 from .coordinator import AmazonEchoCoordinator
 from .data import AmazonEchoData
-from .entity import AmazonEchoEntity, async_add_device_entities
+from .entity import (
+    AmazonEchoEndpointEntity,
+    AmazonEchoEntity,
+    async_add_device_entities,
+    async_add_endpoint_entities,
+)
 
 PARALLEL_UPDATES = 0
 
@@ -103,6 +115,14 @@ def _connected_bluetooth(data: AmazonEchoData, device: Device) -> str | None:
     )
 
 
+def _time_zone(data: AmazonEchoData, device: Device) -> str | None:
+    """Time zone from the device setting, else from the account's preferences."""
+    zone: str | None = data.setting(device, "timeZone") or data.device_preferences.get(
+        device.serial, {}
+    ).get("time_zone")
+    return zone
+
+
 def _setting(key: str, setting: str, **kwargs: Any) -> AmazonEchoSensorDescription:
     return AmazonEchoSensorDescription(
         key=key,
@@ -114,19 +134,93 @@ def _setting(key: str, setting: str, **kwargs: Any) -> AmazonEchoSensorDescripti
     )
 
 
+# What an endpoint (Alexa device or smart-home device) can measure, by the key
+# of the value in its GraphQL state. An entity is created once a value shows up.
+MEASUREMENTS: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="humidity",
+        device_class=SensorDeviceClass.HUMIDITY,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    SensorEntityDescription(
+        key="illuminance",
+        device_class=SensorDeviceClass.ILLUMINANCE,
+        native_unit_of_measurement=LIGHT_LUX,
+    ),
+    SensorEntityDescription(
+        key="pm25",
+        device_class=SensorDeviceClass.PM25,
+        native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    ),
+    SensorEntityDescription(
+        key="pm10",
+        device_class=SensorDeviceClass.PM10,
+        native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    ),
+    SensorEntityDescription(
+        key="co",
+        device_class=SensorDeviceClass.CO,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+    ),
+    # Amazon reports VOC as an index, which has no device class.
+    SensorEntityDescription(key="voc"),
+    SensorEntityDescription(key="air_quality", device_class=SensorDeviceClass.AQI),
+    SensorEntityDescription(
+        key="battery",
+        device_class=SensorDeviceClass.BATTERY,
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
+
+def _measurement(description: SensorEntityDescription) -> AmazonEchoSensorDescription:
+    """Sensor of an Alexa device fed by its GraphQL endpoint state."""
+    key = description.key
+    return AmazonEchoSensorDescription(
+        key=key,
+        translation_key=key,
+        device_class=description.device_class,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=description.native_unit_of_measurement,
+        exists_fn=lambda data, device: data.endpoint(device, key) is not None,
+        value_fn=lambda data, device: data.endpoint(device, key),
+    )
+
+
+@dataclass(frozen=True, kw_only=True)
+class AmazonEchoEndpointSensorDescription(SensorEntityDescription):
+    """Sensor of a smart-home endpoint."""
+
+    exists_fn: Callable[[Endpoint], bool]
+
+
+ENDPOINT_SENSORS: tuple[AmazonEchoEndpointSensorDescription, ...] = tuple(
+    AmazonEchoEndpointSensorDescription(
+        key=description.key,
+        translation_key=description.key,
+        device_class=description.device_class,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=description.native_unit_of_measurement,
+        entity_category=description.entity_category,
+        exists_fn=lambda endpoint, key=description.key: (
+            endpoint.state.get(key) is not None
+        ),
+    )
+    for description in MEASUREMENTS
+)
+
 SENSORS: tuple[AmazonEchoSensorDescription, ...] = (
     _next("next_alarm", CAP_TIMERS_AND_ALARMS, "alarm", "music_alarm"),
     _next("next_timer", CAP_TIMERS_AND_ALARMS, "timer"),
     _next("next_reminder", CAP_REMINDERS, "reminder"),
-    AmazonEchoSensorDescription(
-        key="temperature",
-        translation_key="temperature",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        exists_fn=lambda data, device: data.endpoint(device, "temperature") is not None,
-        value_fn=lambda data, device: data.endpoint(device, "temperature"),
-    ),
+    # The battery of an Alexa device comes from the device list (below).
+    *(_measurement(d) for d in MEASUREMENTS if d.key != "battery"),
     AmazonEchoSensorDescription(
         key="wifi_ssid",
         translation_key="wifi_ssid",
@@ -179,9 +273,17 @@ SENSORS: tuple[AmazonEchoSensorDescription, ...] = (
         exists_fn=lambda data, device: device.serial in data.local,
         value_fn=lambda data, device: data.local[device.serial].spotify_user,
     ),
-    _setting("time_zone", "timeZone"),
+    AmazonEchoSensorDescription(
+        key="time_zone",
+        translation_key="time_zone",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        exists_fn=lambda data, device: _time_zone(data, device) is not None,
+        value_fn=lambda data, device: _time_zone(data, device),
+    ),
     _setting("wake_word_sensitivity", "wakeWordSensitivity"),
 )
+
+LAST_CALLED = SensorEntityDescription(key="last_called", translation_key="last_called")
 
 
 async def async_setup_entry(
@@ -191,6 +293,10 @@ async def async_setup_entry(
 ) -> None:
     """Create the sensors."""
     async_add_device_entities(entry, async_add_entities, SENSORS, AmazonEchoSensor)
+    async_add_endpoint_entities(
+        entry, async_add_entities, ENDPOINT_SENSORS, AmazonEchoEndpointSensor
+    )
+    async_add_entities([AmazonEchoLastCalledSensor(entry.runtime_data, LAST_CALLED)])
 
 
 class AmazonEchoSensor(AmazonEchoEntity, SensorEntity):
@@ -219,3 +325,38 @@ class AmazonEchoSensor(AmazonEchoEntity, SensorEntity):
         if self.entity_description.attributes_fn is None:
             return None
         return self.entity_description.attributes_fn(self.data, self.device)
+
+
+class AmazonEchoEndpointSensor(AmazonEchoEndpointEntity, SensorEntity):
+    """Sensor of a smart-home endpoint."""
+
+    @property
+    def native_value(self) -> StateType:
+        """Current value."""
+        value: StateType = self.value(self.entity_description.key)
+        return value
+
+
+class AmazonEchoLastCalledSensor(AmazonEchoEntity, SensorEntity):
+    """The device that answered the last voice request (account device)."""
+
+    @property
+    def native_value(self) -> str | None:
+        """Name of the device, None until someone talks to Alexa."""
+        if (record := self.data.last_called) is None:
+            return None
+        device = self.data.devices.get(record.device_serial or "")
+        return device.name if device else record.device_serial
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """What was said, what Alexa answered, when and to whom."""
+        if (record := self.data.last_called) is None:
+            return None
+        return {
+            "utterance": record.utterance,
+            "response": record.response,
+            "timestamp": record.timestamp.isoformat(),
+            "person": record.person,
+            "intent": record.intent,
+        }

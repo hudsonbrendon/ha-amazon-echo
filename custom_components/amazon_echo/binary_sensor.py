@@ -1,4 +1,4 @@
-"""Binary sensors: cloud and LAN connectivity, AUX cable, charging."""
+"""Binary sensors: connectivity, AUX cable, charging, motion and contact."""
 
 from __future__ import annotations
 
@@ -14,12 +14,17 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from amazon_echo import Device
+from amazon_echo import Device, Endpoint
 
 from . import AmazonEchoConfigEntry
 from .coordinator import AmazonEchoCoordinator
 from .data import AmazonEchoData
-from .entity import AmazonEchoEntity, async_add_device_entities
+from .entity import (
+    AmazonEchoEndpointEntity,
+    AmazonEchoEntity,
+    async_add_device_entities,
+    async_add_endpoint_entities,
+)
 
 PARALLEL_UPDATES = 0
 
@@ -69,6 +74,34 @@ BINARY_SENSORS: tuple[AmazonEchoBinarySensorDescription, ...] = (
         exists_fn=lambda data, device: device.charging is not None,
         is_on_fn=lambda data, device: device.charging,
     ),
+    AmazonEchoBinarySensorDescription(
+        key="motion",
+        translation_key="motion",
+        device_class=BinarySensorDeviceClass.MOTION,
+        exists_fn=lambda data, device: data.endpoint(device, "motion") is not None,
+        is_on_fn=lambda data, device: data.endpoint(device, "motion"),
+    ),
+)
+
+
+@dataclass(frozen=True, kw_only=True)
+class AmazonEchoEndpointBinarySensorDescription(BinarySensorEntityDescription):
+    """Binary sensor of a smart-home endpoint, named after its state key."""
+
+    exists_fn: Callable[[Endpoint], bool]
+
+
+ENDPOINT_BINARY_SENSORS: tuple[AmazonEchoEndpointBinarySensorDescription, ...] = tuple(
+    AmazonEchoEndpointBinarySensorDescription(
+        key=key,
+        translation_key=key,
+        device_class=device_class,
+        exists_fn=lambda endpoint, key=key: endpoint.state.get(key) is not None,
+    )
+    for key, device_class in (
+        ("contact", BinarySensorDeviceClass.DOOR),
+        ("motion", BinarySensorDeviceClass.MOTION),
+    )
 )
 
 
@@ -90,6 +123,12 @@ async def async_setup_entry(
         entry, async_add_entities, BINARY_SENSORS, AmazonEchoBinarySensor
     )
     async_add_entities([AmazonEchoPushSensor(entry.runtime_data, PUSH_CONNECTED)])
+    async_add_endpoint_entities(
+        entry,
+        async_add_entities,
+        ENDPOINT_BINARY_SENSORS,
+        AmazonEchoEndpointBinarySensor,
+    )
 
 
 class AmazonEchoBinarySensor(AmazonEchoEntity, BinarySensorEntity):
@@ -122,3 +161,13 @@ class AmazonEchoPushSensor(AmazonEchoEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """True while the push stream is open."""
         return bool(self.coordinator.push_connected)
+
+
+class AmazonEchoEndpointBinarySensor(AmazonEchoEndpointEntity, BinarySensorEntity):
+    """Contact or motion sensor linked to Alexa."""
+
+    @property
+    def is_on(self) -> bool | None:
+        """Open / motion detected."""
+        value: bool | None = self.value(self.entity_description.key)
+        return value

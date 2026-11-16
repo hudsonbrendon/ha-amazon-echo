@@ -18,13 +18,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from amazon_echo import BluetoothDevice, MediaState
+from amazon_echo import BluetoothDevice, Device, MediaState
 
 from . import AmazonEchoConfigEntry
 from .const import (
+    CAP_AUDIO_PLAYER,
     DEFAULT_MUSIC_PROVIDER,
     DOMAIN,
+    MEDIA_TYPE_IMAGE,
     MEDIA_TYPE_ROUTINE,
+    MEDIA_TYPE_SEQUENCE,
     MEDIA_TYPE_SKILL,
     MEDIA_TYPE_SOUND,
     MEDIA_TYPE_TEXT_COMMAND,
@@ -50,9 +53,16 @@ BASE_FEATURES = (
     | MediaPlayerEntityFeature.SHUFFLE_SET
     | MediaPlayerEntityFeature.REPEAT_SET
     | MediaPlayerEntityFeature.PLAY_MEDIA
+    | MediaPlayerEntityFeature.TURN_ON
+    | MediaPlayerEntityFeature.TURN_OFF
 )
 STATES = {"playing": MediaPlayerState.PLAYING, "paused": MediaPlayerState.PAUSED}
 UNMUTE_FALLBACK_VOLUME = 30
+
+
+def is_player(device: Device) -> bool:
+    """Whether a device can play audio (speaker groups included)."""
+    return device.is_group or device.supports(CAP_AUDIO_PLAYER)
 
 
 async def async_setup_entry(
@@ -198,9 +208,26 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
         def names(serials: tuple[str, ...]) -> list[str]:
             return [devices[s].name for s in serials if s in devices]
 
+        serial = self.device.serial
+        last = self.data.last_called
+        if last is not None and last.device_serial != serial:
+            last = None
+        message = self.coordinator.last_messages.get(serial)
         return {
             "members": names(self.device.cluster_members),
             "groups": names(self.device.parent_clusters),
+            "last_called": last is not None,
+            "last_called_timestamp": last.timestamp.isoformat() if last else None,
+            "last_called_summary": last.utterance if last else None,
+            "last_called_response": last.response if last else None,
+            "last_message": message[1] if message else None,
+            "last_message_type": message[0] if message else None,
+            "bluetooth_list": [p.name or p.address for p in self._paired],
+            "connected_bluetooth": next(
+                (p.name or p.address for p in self._paired if p.connected), None
+            ),
+            "previous_volume": self.data.previous_volumes.get(serial),
+            "locale": self.data.device_preferences.get(serial, {}).get("locale"),
         }
 
     # ------------------------------------------------------------------ #
@@ -231,6 +258,14 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
         self.data.media.setdefault(self.device.serial, MediaState()).state = "idle"
         self.coordinator.async_update_listeners()
 
+    async def async_turn_off(self) -> None:
+        """An Echo cannot be switched off: stop what it is doing."""
+        await self.async_media_stop()
+
+    async def async_turn_on(self) -> None:
+        """An Echo is always on: resume what was playing."""
+        await self.async_media_play()
+
     async def async_media_next_track(self) -> None:
         """Next."""
         await self._async_command("next")
@@ -256,7 +291,7 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
         await self.coordinator.async_write(
             self.coordinator.client.set_volume(self.device, volume)
         )
-        self.data.volumes[self.device.serial] = (volume, False)
+        self.coordinator.async_set_volume(self.device.serial, volume)
         self.coordinator.async_update_listeners()
 
     async def async_set_volume_level(self, volume: float) -> None:
@@ -311,6 +346,10 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
             action = client.text_command(device, media_id)
         elif media_type == MEDIA_TYPE_TTS:
             action = client.speak(device, media_id)
+        elif media_type == MEDIA_TYPE_SEQUENCE:
+            action = client.send_sequence(device, media_id, kwargs.get("extra"))
+        elif media_type == MEDIA_TYPE_IMAGE:
+            action = client.set_background_image(device, media_id)
         else:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,

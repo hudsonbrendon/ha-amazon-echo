@@ -1,5 +1,10 @@
 {
   "entity": {
+    "alarm_control_panel": {
+      "guard": {
+        "default": "mdi:shield-home"
+      }
+    },
     "binary_sensor": {
       "aux_plugged": {
         "default": "mdi:audio-input-stereo-minijack"
@@ -21,6 +26,9 @@
       },
       "announce": {
         "default": "mdi:bullhorn"
+      },
+      "speak_last_called": {
+        "default": "mdi:account-voice"
       }
     },
     "number": {
@@ -38,6 +46,9 @@
       },
       "speaking_rate": {
         "default": "mdi:speedometer"
+      },
+      "display_brightness": {
+        "default": "mdi:brightness-6"
       }
     },
     "select": {
@@ -52,6 +63,15 @@
       },
       "time_format": {
         "default": "mdi:clock-outline"
+      },
+      "drop_in": {
+        "default": "mdi:phone-incoming"
+      },
+      "default_device": {
+        "default": "mdi:speaker"
+      },
+      "amazon_kids_profile": {
+        "default": "mdi:account-child"
       }
     },
     "sensor": {
@@ -81,6 +101,12 @@
       },
       "wake_word_sensitivity": {
         "default": "mdi:microphone-settings"
+      },
+      "voc": {
+        "default": "mdi:molecule"
+      },
+      "last_called": {
+        "default": "mdi:account-voice"
       }
     },
     "switch": {
@@ -128,6 +154,24 @@
       },
       "adaptive_volume": {
         "default": "mdi:volume-vibrate"
+      },
+      "communications": {
+        "default": "mdi:phone-message"
+      },
+      "announcements": {
+        "default": "mdi:bullhorn"
+      },
+      "display_power": {
+        "default": "mdi:monitor"
+      },
+      "adaptive_brightness": {
+        "default": "mdi:brightness-auto"
+      },
+      "aqm_led": {
+        "default": "mdi:led-on"
+      },
+      "amazon_kids": {
+        "default": "mdi:teddy-bear"
       }
     },
     "todo": {
@@ -181,6 +225,36 @@
     },
     "call_feature": {
       "service": "mdi:api"
+    },
+    "send_info_skill": {
+      "service": "mdi:information-outline"
+    },
+    "send_mobile_push": {
+      "service": "mdi:cellphone-message"
+    },
+    "send_drop_in_notification": {
+      "service": "mdi:phone-incoming"
+    },
+    "send_announcement": {
+      "service": "mdi:bullhorn"
+    },
+    "enable_alarm": {
+      "service": "mdi:alarm-check"
+    },
+    "disable_alarm": {
+      "service": "mdi:alarm-off"
+    },
+    "skip_next_alarm": {
+      "service": "mdi:alarm-snooze"
+    },
+    "update_last_called": {
+      "service": "mdi:account-voice"
+    },
+    "restore_volume": {
+      "service": "mdi:volume-source"
+    },
+    "repeat_last_message": {
+      "service": "mdi:repeat"
     }
   }
 }

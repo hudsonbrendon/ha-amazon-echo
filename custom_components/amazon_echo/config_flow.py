@@ -57,6 +57,7 @@ from .const import (
     CONF_ENTRY,
     CONF_HOSTS,
     CONF_SCAN_INTERVAL,
+    CONF_SMART_HOME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     LOGGER,
@@ -85,6 +86,7 @@ OPTIONS_SCHEMA = vol.Schema(
         ),
         vol.Optional(CONF_ENABLE_PUSH, default=True): BooleanSelector(),
         vol.Optional(CONF_ENABLE_LOCAL, default=True): BooleanSelector(),
+        vol.Optional(CONF_SMART_HOME, default=False): BooleanSelector(),
     }
 )
 
@@ -332,7 +334,7 @@ class AmazonEchoConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class AmazonEchoOptionsFlow(OptionsFlowWithReload):
-    """Polling interval, push channel and LAN probing."""
+    """Polling interval, push channel, LAN probing and smart-home devices."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
