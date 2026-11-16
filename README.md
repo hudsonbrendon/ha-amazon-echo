@@ -13,7 +13,9 @@ Echo, Echo Show, Fire TV, Fire tablets, Echo Buds and multi-room speaker
 groups in Home Assistant, through
 [python-amazon-echo](https://github.com/hudsonbrendon/python-amazon-echo).
 It does everything the built-in **Alexa Devices** integration and **Alexa
-Media Player** do, and adds what neither has:
+Media Player** do — [COMPARISON.md](COMPARISON.md) walks through both, feature
+by feature, with the line of their source where each one lives — and adds
+what neither has:
 
 - **No password in Home Assistant.** Reuse the session Alexa Media Player
   already has, or sign in to Amazon in your own browser (passkeys, two-step
@@ -35,6 +37,11 @@ Media Player** do, and adds what neither has:
   list as attributes, plus actions to create and delete them.
 - Routines as buttons, Alexa lists as to-do entities, a voice command event
   entity, Wi-Fi network, temperature, batteries, reboot.
+- **Everything the other two have**: Drop In, announcements and
+  communications per device, the last called device, Amazon Kids, Echo Show
+  display settings, illuminance / motion / humidity / air-quality sensors,
+  info skills, notifications to the Alexa app, Alexa Guard, Echo Glow and,
+  if you ask for it, the smart-home devices linked to Alexa.
 
 An Echo has no local control API: commands always go through Amazon. What is
 local is discovery, addressing, reachability and Spotify state.
@@ -48,10 +55,40 @@ created for what each device reports, so an Echo Show gets night mode and
 captions, an Echo Plus gets temperature and AUX, a Fire TV gets ambient mode
 and remote battery.
 
-The smart-home devices linked to your Alexa account (lamps, plugs, cameras)
-are **not** imported: they already exist in Home Assistant through their own
-integrations. The `amazon_echo.call_feature` action covers the rare case
-where you need one.
+Amazon hardware without a microphone — **Echo Glow** and the **Air Quality
+Monitor** — is always added too, since nothing else in Home Assistant has it.
+
+### Smart-home devices linked to Alexa (off by default)
+
+The lamps, plugs, sensors and locks of other brands that you linked to Alexa
+are **not** imported unless you turn on *Alexa smart-home devices* in the
+options. It is off by default because those devices normally already exist
+in Home Assistant through their own integrations, and importing them again
+would only give you every device twice, slower and through one more cloud.
+Turn it on when Alexa is the only way to reach a device (something paired
+straight to an Echo over Zigbee, Matter or Bluetooth, or a brand with an
+Alexa skill and no Home Assistant integration).
+
+With the option on, every endpoint becomes a device attached to the account
+device, with what it reports:
+
+| Platform | Created for | Operations sent to Alexa |
+| --- | --- | --- |
+| Light | lamps, and anything with power that dims or changes colour | `turnOn`, `turnOff`, `setBrightness`, `setColor`, `setColorTemperature`, `setMode` (light shows) |
+| Switch | plugs, wall switches and anything else that only turns on and off | `turnOn`, `turnOff` |
+| Sensor | temperature, humidity, battery, illuminance | — |
+| Binary sensor | contact (open/closed), motion | — |
+| Lock | locks | `lock`, and `unlock` only for the locks where Amazon allows it |
+
+What Home Assistant itself published to Alexa is never taken back: devices
+whose manufacturer is a Home Assistant Matter bridge (Home Assistant Matter
+Hub, Matterbridge) are skipped, and so are Hue lamps while the Emulated Hue
+integration is loaded. Scenes, cameras and thermostats are not turned into
+entities; `amazon_echo.call_feature` reaches anything else.
+
+A command is applied to the entity at once and confirmed by push, or by the
+next poll when there is no push. Turning the option off removes the devices
+again.
 
 ## Installation
 
@@ -93,18 +130,20 @@ Home Assistant" under *Manage Your Content and Devices* on the Amazon site.
 | Polling interval | 300 s | Only a fallback while push is connected. With push down the account is polled every 60 s. |
 | Receive changes by push | on | The HTTP/2 push channel. |
 | Probe devices on the local network | on | IP address, local reachability and Spotify user, every 60 s, without the cloud. |
+| Alexa smart-home devices | **off** | Lights, switches, sensors and locks for the smart-home devices linked to Alexa. See above for why it is off. |
 
 ## How data is updated
 
 | Tier | When | What |
 | --- | --- | --- |
-| Push | as it happens | volume, do not disturb, playback, Bluetooth, alarms/timers/reminders, lists, online state, voice commands |
-| Fast poll | 300 s (60 s without push) | device list, do not disturb, volumes, Bluetooth, notifications, endpoint states (temperature, remote battery), media of playing devices |
-| Slow poll | in the background right after startup, every 3 hours and right after a related write | Wi-Fi, equalizer, request sounds, AUX, alarm volume, wake word, alarm sounds, device settings, whisper mode, adaptive volume, routines, lists |
+| Push | as it happens | volume, do not disturb, playback, Bluetooth, alarms/timers/reminders, lists, online state, voice commands (and with them the last called device), smart-home and sensor state |
+| Fast poll | 300 s (60 s without push) | device list, do not disturb, volumes, Bluetooth, notifications, endpoint states (temperature, illuminance, motion, humidity, air quality, remote battery), smart-home devices, Guard, media of playing devices; without push also the voice history |
+| Slow poll | in the background right after startup, every 3 hours and right after a related write | Wi-Fi, equalizer, request sounds, AUX, alarm volume, wake word, alarm sounds, device settings, communication preferences, Amazon Kids, whisper mode, adaptive volume, routines, lists, locale and time zone |
 | Local | 60 s | IP address, local reachability, Spotify user |
 
 A setting one device does not support is asked once and then skipped; one
-device failing never fails the whole update.
+device failing never fails the whole update. The endpoint states and the
+smart-home devices come from a single request.
 
 ## Entities
 
@@ -114,18 +153,36 @@ Per device (each one only when the device reports it):
 | --- | --- |
 | Media player | the device or speaker group |
 | Notify | Speak, Announce (with title) |
-| Switch | Do not disturb, Ascending alarm, Start of request sound, End of request sound, Adaptive listening, Captions, Gestures, Night mode, Smart motion, Visual gesture, Tap gestures, Ambient mode (Fire TV) |
-| Number | Bass, Midrange, Treble, Alarm volume, Speaking rate |
-| Select | Wake word, Alarm sound, AUX direction, Time format |
-| Sensor | Next alarm, Next timer, Next reminder, Temperature, Wi-Fi network, IP address, Bluetooth device, Battery, Remote battery, Spotify user, Time zone, Wake word sensitivity |
-| Binary sensor | Online, Reachable on the local network, AUX cable plugged in, Charging |
+| Switch | Do not disturb, Communications, Announcements, Amazon Kids, Ascending alarm, Start of request sound, End of request sound, Adaptive listening, Captions, Gestures, Night mode, Smart motion, Visual gesture, Tap gestures, Display, Adaptive brightness, Ambient mode (Fire TV) |
+| Number | Bass, Midrange, Treble, Alarm volume, Speaking rate, Display brightness |
+| Select | Wake word, Alarm sound, AUX direction, Time format, Drop In (all contacts / my household / off), Amazon Kids profile |
+| Sensor | Next alarm, Next timer, Next reminder, Temperature, Humidity, Illuminance, PM2.5, PM10, Carbon monoxide, Volatile organic compounds, Air quality index, Wi-Fi network, IP address, Bluetooth device, Battery, Remote battery, Spotify user, Time zone, Wake word sensitivity |
+| Binary sensor | Online, Reachable on the local network, AUX cable plugged in, Charging, Motion |
 | Button | Reboot |
-| Event | Voice command (`utterance`, `response`, `intent`, `person`) |
+| Event | Voice command (`utterance`, `response`, `intent`, `person`, `person_type`) |
 
 On the account device: Whisper mode and Adaptive volume switches, a
 Real-time updates binary sensor (is the push stream open), one button
-per enabled routine and one to-do entity per Alexa list (Shopping list,
-To-do list and your custom lists).
+per enabled routine, one to-do entity per Alexa list (Shopping list,
+To-do list and your custom lists), and:
+
+- **Last called device** sensor: the name of the device that answered the
+  last voice request, with `utterance`, `response`, `timestamp`, `person`
+  and `intent` as attributes. It follows the same voice-history read as the
+  voice command event (push, or every poll while push is down) and is filled
+  at startup from the last week of history without firing events.
+- **Speak on the last called device** notify entity: answers wherever you
+  were just talking to Alexa.
+- **Default device for routines** select: the device that stands in for
+  "the device that heard the request" when a routine is started from its
+  button. The choice is kept by Home Assistant.
+- **Alexa Guard** alarm panel, only on accounts that have Guard: arm away,
+  disarm (home).
+
+The media player also carries `last_called`, `last_called_timestamp`,
+`last_called_summary`, `last_called_response`, `bluetooth_list`,
+`connected_bluetooth`, `previous_volume`, `last_message`,
+`last_message_type` and `locale` as attributes.
 
 `media_player.play_media` content types:
 
@@ -136,7 +193,9 @@ To-do list and your custom lists).
 | `sound` | sound id, for example `amzn_sfx_doorbell_chime_01` |
 | `skill` | skill id |
 | `text_command` | what you would say to Alexa |
-| `tts` | text to speak |
+| `tts` | text to speak (SSML is passed through, so `<audio src="https://…"/>` plays a file in a format Alexa accepts) |
+| `sequence` | a behavior node type such as `Alexa.Weather.Play`; `extra` becomes its payload |
+| `image` | https address of a picture to show as the background of an Echo Show |
 
 ## Actions
 
@@ -156,7 +215,15 @@ Every action takes `device_id`: an Echo, or the account device where noted.
 | `amazon_echo.get_voice_history` | `limit`; device or account | `records` |
 | `amazon_echo.bluetooth_connect` | `address` (name or MAC of a paired device) | — |
 | `amazon_echo.bluetooth_disconnect` | | — |
-| `amazon_echo.call_feature` | `feature`, `operation`, `endpoint_id`, `instance`, `payload` | — |
+| `amazon_echo.call_feature` | `feature`, `operation`, `endpoint_id`, `instance`, `payload`; a smart-home device can be picked directly | — |
+| `amazon_echo.send_info_skill` | `skill`: `weather`, `traffic`, `flash_briefing`, `national_news`, `good_morning`, `good_night`, `im_home`, `fun_fact`, `joke`, `tell_story`, `sing_a_song`, `clean_up`, `date`, `time`, `calendar_today`, `calendar_tomorrow`, `calendar_next` | — |
+| `amazon_echo.send_mobile_push` | `message`, `title`; device or account. Goes to the Alexa app on your phones | — |
+| `amazon_echo.send_drop_in_notification` | `message`, `title`; an Alexa app notification that opens Drop In | — |
+| `amazon_echo.send_announcement` | `device_id` (several), `message`, `title`, `method` (`all`, `speak`, `show`) | — |
+| `amazon_echo.enable_alarm` / `disable_alarm` / `skip_next_alarm` | `notification_id` | — |
+| `amazon_echo.update_last_called` | device or account | — |
+| `amazon_echo.restore_volume` | sets the device back to the volume it had before its last change | — |
+| `amazon_echo.repeat_last_message` | repeats the last speak or announce Home Assistant sent to the device | — |
 
 Example: repeat on the office Echo Show what was said to the kitchen Echo.
 
@@ -175,12 +242,39 @@ automation:
           message: "{{ trigger.to_state.attributes.utterance }}"
 ```
 
+## Events
+
+Besides the voice command event entity, these are fired on the event bus:
+
+| Event | When | Data |
+| --- | --- | --- |
+| `amazon_echo_voice_command` | a device heard a voice request | `device_id`, `serial`, `name`, `timestamp`, `utterance`, `response`, `intent`, `person` |
+| `amazon_echo_last_called` | a different device became the last called one | same as above |
+| `amazon_echo_notification` | an alarm, timer or reminder goes off (its scheduled time) | `id`, `kind`, `status`, `label`, `when`, `recurrence`, `sound`, `device_id`, `name` |
+| `amazon_echo_alarm_dismissed` | an alarm that was ringing or snoozed was dismissed | same as above |
+
+```yaml
+automation:
+  - alias: Turn the lights on when the bedroom alarm is dismissed
+    triggers:
+      - trigger: event
+        event_type: amazon_echo_alarm_dismissed
+        event_data:
+          name: Bedroom Echo
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.bedroom
+```
+
 ## Diagnostics
 
 Settings → Devices & services → Amazon Echo → ⋮ → *Download diagnostics*.
 Tokens, cookies, e-mail, account name, serial numbers, MAC and IP addresses,
-Wi-Fi name and Bluetooth addresses are redacted; devices appear as
-`device_0`, `device_1`...
+Wi-Fi name, Bluetooth addresses and what was said to Alexa are redacted;
+devices appear as `device_0`, `device_1`..., smart-home devices as
+`endpoint_0`... A device page has its own *Download diagnostics* with only
+that device.
 
 ## Known limitations
 
@@ -206,6 +300,26 @@ Wi-Fi name and Bluetooth addresses are redacted; devices appear as
   `amazon_echo.run_routine` action with a device.
 - A device that leaves the account and comes back gets its entities again on
   the next reload.
+- **Communication preferences** (Drop In, Announcements, Communications) come
+  from an Amazon service that does not answer for every account. When it
+  fails for a device the three entities are simply not created, and it is
+  asked again three hours later.
+- **Alexa Guard** follows what Alexa Media Player does and was not run against
+  a real Guard: the test account has none. Amazon retired the free Guard in
+  most countries.
+- **Smart-home devices**: the state is what Amazon last heard from the
+  device's own cloud, so it can lag; without push it is corrected by the next
+  poll. The payload of `setColorTemperature` is inferred, colour temperature
+  is offered from 2200 K to 6500 K. None of the smart-home operations was
+  sent to a real device during development.
+- **Amazon Kids**: reading the profiles and the device state was verified;
+  switching a device was not. A new child profile is noticed within three
+  hours.
+- **Notifications to the Alexa app, info skills, Echo Show background image**
+  are ported from the two other integrations and were not sent during
+  development.
+- Deleting voice history is not offered: the endpoint the other integrations'
+  libraries have for it (`/api/activities`) no longer exists.
 - This integration uses Amazon's private app API, which can change without
   notice.
 

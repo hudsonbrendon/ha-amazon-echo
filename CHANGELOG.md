@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.2.0 - 2026-11-16
+
+Everything Alexa Media Player 5.21.0 and the core Alexa Devices integration
+have is now here; [COMPARISON.md](COMPARISON.md) lists it feature by feature.
+Requires `python-amazon-echo` 0.2.0.
+
+- Communication preferences per device: **Drop In** select (all contacts /
+  my household / off), **Announcements** and **Communications** switches.
+- Sensors read from the device's own endpoint, created for whatever a device
+  reports: illuminance, humidity, PM2.5, PM10, carbon monoxide, volatile
+  organic compounds, air quality index, and a **Motion** binary sensor.
+- **Last called device** sensor on the account device (utterance, response,
+  timestamp and person as attributes), a notify entity that speaks on that
+  device, and `last_called` attributes on the media players. Without push
+  the voice history is read on every poll.
+- **Alexa Guard** alarm panel (arm away / disarm) on accounts that have Guard.
+- **Echo Glow** as a light (colour, brightness, light shows) and the **Air
+  Quality Monitor** (its readings and the indicator light), always added.
+- New option **Alexa smart-home devices**, off by default: lights (power,
+  brightness, colour, colour temperature, effects), switches, sensors
+  (temperature, humidity, battery, illuminance), contact and motion binary
+  sensors and locks for the devices linked to Alexa, one device each.
+  Entities that Home Assistant itself bridged to Alexa are skipped.
+- **Amazon Kids** switch and profile select; Echo Show **Display** and
+  **Adaptive brightness** switches and **Display brightness** number;
+  **Default device for routines** select.
+- Media player: `turn_on` / `turn_off`, `play_media` types `sequence` and
+  `image`, more attributes (Bluetooth list, previous volume, last message,
+  locale).
+- Actions: `send_info_skill`, `send_mobile_push`,
+  `send_drop_in_notification`, `send_announcement` (several devices; speak,
+  show or both), `enable_alarm`, `disable_alarm`, `skip_next_alarm`,
+  `update_last_called`, `restore_volume`, `repeat_last_message`;
+  `call_feature` accepts a smart-home device.
+- Events on the bus: `amazon_echo_voice_command`, `amazon_echo_last_called`,
+  `amazon_echo_notification` (an alarm, timer or reminder goes off) and
+  `amazon_echo_alarm_dismissed`.
+- Push: smart-home state changes are applied as they arrive; "now playing"
+  events refresh the player.
+- Diagnostics per device; what was said to Alexa is redacted.
+- The time zone sensor now exists for every device (account preferences), the
+  voice command event has `person_type`.
+
 ## 0.1.2 - 2026-11-16
 
 - The first refresh is bounded to 90 s. With a slow network at boot Home Assistant now retries the entry; before, the global bootstrap timeout cancelled the setup and left the entry in error until a manual reload.
