@@ -70,7 +70,7 @@ def test_named_source_files_exist() -> None:
 
 def test_document_shape() -> None:
     """Three products per table, competitor claims cited, both closing lists."""
-    header = "| AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2.0 |"
+    header = "| AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |"
     assert COMPARISON.count(header) >= 15
     for section in (
         "## Authentication",
@@ -88,7 +88,9 @@ def test_document_shape() -> None:
         assert f"\n{section}\n" in COMPARISON, section
     assert len(CITATION.findall(COMPARISON)) > 150
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert f"amazon_echo {manifest['version']}" in COMPARISON
+    # major.minor only, so a patch release does not need a document edit
+    minor = ".".join(manifest["version"].split(".")[:2])
+    assert f"amazon_echo {minor} |" in COMPARISON
 
 
 @pytest.mark.parametrize("language", ["en", "pt-BR", "pt"])

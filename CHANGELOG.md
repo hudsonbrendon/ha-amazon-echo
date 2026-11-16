@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 - 2026-11-16
+
+- Use `UnitOfDensity` / `UnitOfRatio` instead of the unit constants Home Assistant deprecated (removed in 2027.8).
+
 ## 0.2.0 - 2026-11-16
 
 Everything Alexa Media Player 5.21.0 and the core Alexa Devices integration
