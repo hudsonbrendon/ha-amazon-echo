@@ -704,6 +704,80 @@
           "description": "The device that repeats."
         }
       }
+    },
+    "create_routine": {
+      "name": "Create routine",
+      "description": "Creates an Alexa routine that runs when you say one of its phrases.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account."
+        },
+        "name": {
+          "name": "Name",
+          "description": "Name shown in the Alexa app."
+        },
+        "phrases": {
+          "name": "Phrases",
+          "description": "What you say to run it (\"when you say\")."
+        },
+        "actions": {
+          "name": "Actions",
+          "description": "In order. Each one is {device, action, value} (action: turn_on, turn_off, brightness, color, temperature; device: Alexa name, entity or endpoint id), {device, operations} with the editor's raw operations, {speak: text}, or a raw routine node."
+        },
+        "enabled": {
+          "name": "Enabled",
+          "description": "Whether the routine starts enabled."
+        }
+      }
+    },
+    "update_routine": {
+      "name": "Update routine",
+      "description": "Changes an Alexa routine. Whatever is not given stays as it is.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account."
+        },
+        "routine": {
+          "name": "Routine",
+          "description": "Name or identifier of the routine."
+        },
+        "name": {
+          "name": "Name",
+          "description": "New name."
+        },
+        "phrases": {
+          "name": "Phrases",
+          "description": "New phrases of the voice trigger."
+        },
+        "actions": {
+          "name": "Actions",
+          "description": "New actions, replacing all of them (same format as Create routine)."
+        },
+        "enabled": {
+          "name": "Enabled",
+          "description": "Enable or disable the routine."
+        },
+        "replace_devices": {
+          "name": "Replace devices",
+          "description": "Old device → new device, e.g. after a lamp was replaced. Names, entities or endpoint ids."
+        }
+      }
+    },
+    "delete_routine": {
+      "name": "Delete routine",
+      "description": "Deletes an Alexa routine.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account."
+        },
+        "routine": {
+          "name": "Routine",
+          "description": "Name or identifier of the routine."
+        }
+      }
     }
   },
   "selector": {
@@ -823,6 +897,12 @@
     },
     "music_alarm_fields": {
       "message": "A music alarm needs alarm_type: music together with music_provider and music_entity."
+    },
+    "smart_home_device_not_found": {
+      "message": "No single smart-home device is called {device}."
+    },
+    "action_value_required": {
+      "message": "The {action} action needs a value."
     }
   }
 }

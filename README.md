@@ -249,6 +249,9 @@ Every action takes `device_id`: an Echo, or the account device where noted.
 | `amazon_echo.send_text_command` | `text` | — |
 | `amazon_echo.play_sound` | `sound` | — |
 | `amazon_echo.run_routine` | `routine` (name or id); account device = the routine's own device | — |
+| `amazon_echo.create_routine` | `name`, `phrases` ("when you say"), `actions`, `enabled`; device or account | `routine_id`, `name` |
+| `amazon_echo.update_routine` | `routine` (name or id) and any of `name`, `phrases`, `actions` (replace all), `enabled`, `replace_devices` (old → new); device or account | — |
+| `amazon_echo.delete_routine` | `routine` (name or id); device or account | — |
 | `amazon_echo.launch_skill` | `skill_id` | — |
 | `amazon_echo.create_alarm` | `time`, `recurrence` (`DAILY`, `WEEKDAYS`, `WEEKENDS`, `WEEKLY`, `MO,WE,FR`); for a music alarm `alarm_type: music`, `music_provider`, `music_entity` | the alarm |
 | `amazon_echo.create_timer` | `duration`, `label` | the timer (Alexa confirms it out loud) |
@@ -267,6 +270,27 @@ Every action takes `device_id`: an Echo, or the account device where noted.
 | `amazon_echo.update_last_called` | device or account | — |
 | `amazon_echo.restore_volume` | sets the device back to the volume it had before its last change | — |
 | `amazon_echo.repeat_last_message` | repeats the last speak or announce Home Assistant sent to the device | — |
+
+Routine actions run in order. Each one is `{device, action, value}`, where
+`action` is `turn_on`, `turn_off`, `brightness` (0–100), `color` (a name such
+as `blue`) or `temperature` (°C) and `device` is the device's name in the
+Alexa app, one of this integration's entities or an endpoint id; or
+`{device, operations}` with the routine editor's own operations; or
+`{speak: text}` (the Echo that heard the phrase says it); or a raw routine
+node. `replace_devices` repairs routines after a device was replaced: every
+action on the old device moves to the new one, the rest stays as it was.
+
+```yaml
+action: amazon_echo.create_routine
+data:
+  device_id: <account device>
+  name: Modo leitura
+  phrases: ["modo leitura"]
+  actions:
+    - {device: Lâmpada 1 da sala, action: brightness, value: 40}
+    - {device: light.abajur_da_sala, action: turn_off}
+    - {speak: Boa leitura}
+```
 
 Example: repeat on the office Echo Show what was said to the kitchen Echo.
 

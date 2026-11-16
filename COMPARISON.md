@@ -8,7 +8,7 @@ one row per feature, built by reading the source of all three.
 | --- | --- | --- |
 | **AMP** — Alexa Media Player (HACS) | 5.21.0, commit `b7b6c72` (2026-11-15) | `AMP file:line` = `custom_components/alexa_media/file`; `apy file:line` = its library `alexapy/file` (dev `7c4d3b0`) |
 | **Core** — Alexa Devices (Home Assistant core) | `dev` at `016643d` (2026-11) | `core file:line` = `homeassistant/components/alexa_devices/file`; `aio file:line` = its library `aioamazondevices` 17.2.12 (commit `9f2a9fa`), `src/aioamazondevices/file` |
-| **amazon_echo** — this integration | 0.3.x | files in `custom_components/amazon_echo/`; an entity is named by its translation key, `entity.<platform>.<key>`, an action as `amazon_echo.<name>` |
+| **amazon_echo** — this integration | 0.4.x | files in `custom_components/amazon_echo/`; an entity is named by its translation key, `entity.<platform>.<key>`, an action as `amazon_echo.<name>` |
 
 How to read it: a cell with a citation means the feature is there, at that
 line; "—" means it is not; plain words say how the same thing is reached
@@ -236,6 +236,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 | Play a built-in sound | `play_media` `sound` (`AMP media_player.py:2003`) | `send_sound` (`core services.py:114`) | `amazon_echo.play_sound` |
 | Info skill (weather, traffic, news, joke…) | `play_media` `sequence` (`AMP media_player.py:1959`) | `send_info_skill` (`core services.py:124`), 17 skills in `aio const/metadata.py:6` | `amazon_echo.send_info_skill`, the same 17 |
 | Run a routine | `play_media` `routine` (`AMP media_player.py:1983`) | button only | `amazon_echo.run_routine` |
+| Create, edit, delete a routine; swap a replaced device in every action | — (read only: `apy alexaapi.py:1966`) | — (read only: `aio const/http.py:40`) | `amazon_echo.create_routine`, `amazon_echo.update_routine` (`replace_devices`), `amazon_echo.delete_routine` |
 | Launch a skill | `play_media` `skill` (`AMP media_player.py:2027`) | — | `amazon_echo.launch_skill` |
 | Notification to the Alexa app | `notify` `type: push` (`AMP notify.py:354`) | — | `amazon_echo.send_mobile_push` |
 | Drop In notification | `notify` `type: dropin_notification` (`AMP notify.py:369`) | — | `amazon_echo.send_drop_in_notification` |

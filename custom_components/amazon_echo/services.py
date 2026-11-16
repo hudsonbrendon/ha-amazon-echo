@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+import re
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import (
@@ -14,18 +15,24 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import config_validation as cv, device_registry as dr
+from homeassistant.helpers import (
+    config_validation as cv,
+    device_registry as dr,
+    entity_registry as er,
+)
 from homeassistant.util import dt as dt_util
 import voluptuous as vol
 
-from amazon_echo import Device, Notification
+from amazon_echo import Device, Endpoint, Notification, routines as routine_parts
 from amazon_echo.const import INFO_SKILLS
 
 from .const import (
+    ATTR_ACTIONS,
     ATTR_ADDRESS,
     ATTR_ALARM_TYPE,
     ATTR_DEVICE_ID,
     ATTR_DURATION,
+    ATTR_ENABLED,
     ATTR_ENDPOINT_ID,
     ATTR_FEATURE,
     ATTR_INSTANCE,
@@ -35,10 +42,13 @@ from .const import (
     ATTR_METHOD,
     ATTR_MUSIC_ENTITY,
     ATTR_MUSIC_PROVIDER,
+    ATTR_NAME,
     ATTR_NOTIFICATION_ID,
     ATTR_OPERATION,
     ATTR_PAYLOAD,
+    ATTR_PHRASES,
     ATTR_RECURRENCE,
+    ATTR_REPLACE_DEVICES,
     ATTR_ROUTINE,
     ATTR_SKILL,
     ATTR_SKILL_ID,
@@ -52,8 +62,10 @@ from .const import (
     SERVICE_CALL_FEATURE,
     SERVICE_CREATE_ALARM,
     SERVICE_CREATE_REMINDER,
+    SERVICE_CREATE_ROUTINE,
     SERVICE_CREATE_TIMER,
     SERVICE_DELETE_NOTIFICATION,
+    SERVICE_DELETE_ROUTINE,
     SERVICE_DISABLE_ALARM,
     SERVICE_ENABLE_ALARM,
     SERVICE_GET_NOTIFICATIONS,
@@ -70,6 +82,7 @@ from .const import (
     SERVICE_SEND_TEXT_COMMAND,
     SERVICE_SKIP_NEXT_ALARM,
     SERVICE_UPDATE_LAST_CALLED,
+    SERVICE_UPDATE_ROUTINE,
 )
 from .coordinator import notification_as_dict
 
@@ -80,12 +93,51 @@ DEVICE = {vol.Required(ATTR_DEVICE_ID): cv.string}
 MESSAGE = {vol.Required(ATTR_MESSAGE): cv.string, vol.Optional(ATTR_TITLE): cv.string}
 NOTIFICATION = vol.Schema({**DEVICE, vol.Required(ATTR_NOTIFICATION_ID): cv.string})
 
+# One routine action: a device + what to do, a sentence to say, or a raw node.
+ACTION = vol.Any(
+    vol.Schema(
+        {
+            vol.Required("device"): cv.string,
+            vol.Exclusive("action", "op"): vol.In(
+                ("turn_on", "turn_off", "brightness", "color", "temperature")
+            ),
+            vol.Exclusive("operations", "op"): [dict],
+            vol.Optional("value"): vol.Any(cv.positive_int, cv.string, float),
+        }
+    ),
+    vol.Schema({vol.Required("speak"): cv.string}),
+    vol.Schema({vol.Required("type"): cv.string}, extra=vol.ALLOW_EXTRA),
+)
+
 SCHEMAS: dict[str, vol.Schema] = {
     SERVICE_SEND_TEXT_COMMAND: vol.Schema(
         {**DEVICE, vol.Required(ATTR_TEXT): cv.string}
     ),
     SERVICE_PLAY_SOUND: vol.Schema({**DEVICE, vol.Required(ATTR_SOUND): cv.string}),
     SERVICE_RUN_ROUTINE: vol.Schema({**DEVICE, vol.Required(ATTR_ROUTINE): cv.string}),
+    SERVICE_CREATE_ROUTINE: vol.Schema(
+        {
+            **DEVICE,
+            vol.Required(ATTR_NAME): cv.string,
+            vol.Required(ATTR_PHRASES): vol.All(cv.ensure_list, [cv.string]),
+            vol.Required(ATTR_ACTIONS): vol.All(cv.ensure_list, [ACTION]),
+            vol.Optional(ATTR_ENABLED, default=True): cv.boolean,
+        }
+    ),
+    SERVICE_UPDATE_ROUTINE: vol.Schema(
+        {
+            **DEVICE,
+            vol.Required(ATTR_ROUTINE): cv.string,
+            vol.Optional(ATTR_NAME): cv.string,
+            vol.Optional(ATTR_PHRASES): vol.All(cv.ensure_list, [cv.string]),
+            vol.Optional(ATTR_ACTIONS): vol.All(cv.ensure_list, [ACTION]),
+            vol.Optional(ATTR_ENABLED): cv.boolean,
+            vol.Optional(ATTR_REPLACE_DEVICES): {cv.string: cv.string},
+        }
+    ),
+    SERVICE_DELETE_ROUTINE: vol.Schema(
+        {**DEVICE, vol.Required(ATTR_ROUTINE): cv.string}
+    ),
     SERVICE_LAUNCH_SKILL: vol.Schema(
         {**DEVICE, vol.Required(ATTR_SKILL_ID): cv.string}
     ),
@@ -161,6 +213,7 @@ SCHEMAS: dict[str, vol.Schema] = {
     SERVICE_REPEAT_LAST_MESSAGE: vol.Schema(DEVICE),
 }
 RESPONSES = {
+    SERVICE_CREATE_ROUTINE: SupportsResponse.OPTIONAL,
     SERVICE_CREATE_ALARM: SupportsResponse.OPTIONAL,
     SERVICE_CREATE_TIMER: SupportsResponse.OPTIONAL,
     SERVICE_CREATE_REMINDER: SupportsResponse.OPTIONAL,
@@ -219,6 +272,60 @@ def _resolve_device(
     if device is None:
         raise _error("device_required")
     return coordinator, device
+
+
+def _operations(action: dict[str, Any]) -> list[dict[str, Any]]:
+    """Translate ``action``/``value`` into the routine editor's operations."""
+    if "operations" in action:
+        return action["operations"]
+    kind, value = action.get("action", "turn_on"), action.get("value")
+    if kind in ("brightness", "color", "temperature") and value is None:
+        raise _error("action_value_required", action=kind)
+    return [
+        {
+            "turn_on": {"type": "turnOn"},
+            "turn_off": {"type": "turnOff"},
+            "brightness": {"type": "setBrightness", "brightness": value},
+            "color": {"type": "setColor", "colorName": value},
+            "temperature": {
+                "type": "setTargetTemperature",
+                "targetTemperature": {"scale": "CELSIUS", "value": value},
+            },
+        }[kind]
+    ]
+
+
+def _endpoint_id(hass: HomeAssistant, endpoints: list[Endpoint], value: str) -> str:
+    """Return the endpoint id behind a name, an entity id or an endpoint id."""
+    if value.startswith("amzn1.alexa.endpoint.") or re.fullmatch(
+        r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}", value
+    ):
+        return value
+    if (entry := er.async_get(hass).async_get(value)) and entry.platform == DOMAIN:
+        return entry.unique_id.split("_", 1)[0]
+    matches = [e.id for e in endpoints if e.name.casefold() == value.casefold()]
+    if len(matches) != 1:
+        raise _error("smart_home_device_not_found", device=value)
+    return matches[0]
+
+
+async def _actions(
+    hass: HomeAssistant, c: AmazonEchoCoordinator, actions: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Turn the actions of a call into routine nodes."""
+    endpoints: list[Endpoint] = []
+    if any("device" in a for a in actions):
+        endpoints = await c.async_write(c.client.get_smart_home_endpoints())
+    nodes = []
+    for action in actions:
+        if "speak" in action:
+            nodes.append(routine_parts.speak_action(action["speak"]))
+        elif "device" in action:
+            target = _endpoint_id(hass, endpoints, action["device"])
+            nodes.append(routine_parts.smart_home_action(target, *_operations(action)))
+        else:
+            nodes.append(action)
+    return nodes
 
 
 def _find(coordinator: AmazonEchoCoordinator, call: ServiceCall) -> Notification:
@@ -280,6 +387,47 @@ def async_setup_services(hass: HomeAssistant) -> None:
         c, device = _resolve(hass, call)
         routine = c.routine(call.data[ATTR_ROUTINE])
         await c.async_write(c.client.run_routine(routine, device))
+
+    async def create_routine(call: ServiceCall) -> ServiceResponse:
+        c, _ = _resolve(hass, call)
+        routine = await c.async_write(
+            c.client.create_routine(
+                call.data[ATTR_NAME],
+                await _actions(hass, c, call.data[ATTR_ACTIONS]),
+                phrases=call.data[ATTR_PHRASES],
+                enabled=call.data[ATTR_ENABLED],
+            ),
+            refresh="routines",
+        )
+        return {"routine_id": routine.id, "name": routine.name}
+
+    async def update_routine(call: ServiceCall) -> None:
+        c, _ = _resolve(hass, call)
+        routine = c.routine(call.data[ATTR_ROUTINE])
+        actions = call.data.get(ATTR_ACTIONS)
+        replace = call.data.get(ATTR_REPLACE_DEVICES)
+        if replace:
+            endpoints = await c.async_write(c.client.get_smart_home_endpoints())
+            replace = {
+                _endpoint_id(hass, endpoints, old): _endpoint_id(hass, endpoints, new)
+                for old, new in replace.items()
+            }
+        await c.async_write(
+            c.client.update_routine(
+                routine.id,
+                name=call.data.get(ATTR_NAME),
+                actions=None if actions is None else await _actions(hass, c, actions),
+                phrases=call.data.get(ATTR_PHRASES),
+                enabled=call.data.get(ATTR_ENABLED),
+                replace_targets=replace,
+            ),
+            refresh="routines",
+        )
+
+    async def delete_routine(call: ServiceCall) -> None:
+        c, _ = _resolve(hass, call)
+        routine = c.routine(call.data[ATTR_ROUTINE])
+        await c.async_write(c.client.delete_routine(routine.id), refresh="routines")
 
     async def launch_skill(call: ServiceCall) -> None:
         c, device = _resolve_device(hass, call)
@@ -477,6 +625,9 @@ def async_setup_services(hass: HomeAssistant) -> None:
         (SERVICE_SEND_TEXT_COMMAND, send_text_command),
         (SERVICE_PLAY_SOUND, play_sound),
         (SERVICE_RUN_ROUTINE, run_routine),
+        (SERVICE_CREATE_ROUTINE, create_routine),
+        (SERVICE_UPDATE_ROUTINE, update_routine),
+        (SERVICE_DELETE_ROUTINE, delete_routine),
         (SERVICE_LAUNCH_SKILL, launch_skill),
         (SERVICE_CREATE_ALARM, create_alarm),
         (SERVICE_CREATE_TIMER, create_timer),

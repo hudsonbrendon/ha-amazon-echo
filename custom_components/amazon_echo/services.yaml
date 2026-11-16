@@ -37,6 +37,77 @@ run_routine:
       selector:
         text:
 
+create_routine:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    name:
+      required: true
+      example: "Modo leitura"
+      selector:
+        text:
+    phrases:
+      required: true
+      example: '["modo leitura"]'
+      selector:
+        text:
+          multiple: true
+    actions:
+      required: true
+      example: '[{"device": "Lâmpada 1 da sala", "action": "brightness", "value": 40}, {"speak": "Boa leitura"}]'
+      selector:
+        object:
+    enabled:
+      default: true
+      selector:
+        boolean:
+
+update_routine:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    routine:
+      required: true
+      example: "desligar quarto"
+      selector:
+        text:
+    name:
+      selector:
+        text:
+    phrases:
+      selector:
+        text:
+          multiple: true
+    actions:
+      selector:
+        object:
+    enabled:
+      selector:
+        boolean:
+    replace_devices:
+      example: '{"Lâmpada antiga": "Lâmpada 1 do quarto"}'
+      selector:
+        object:
+
+delete_routine:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    routine:
+      required: true
+      example: "Teste"
+      selector:
+        text:
+
 launch_skill:
   fields:
     device_id:

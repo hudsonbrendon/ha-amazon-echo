@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-from amazon_echo import AmazonEchoError, Notification, VoiceRecord
+from amazon_echo import AmazonEchoError, Endpoint, Notification, Routine, VoiceRecord
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr
@@ -63,6 +63,9 @@ async def test_every_action_is_registered(hass: HomeAssistant) -> None:
         "send_text_command",
         "play_sound",
         "run_routine",
+        "create_routine",
+        "update_routine",
+        "delete_routine",
         "launch_skill",
         "create_alarm",
         "create_timer",
@@ -354,3 +357,104 @@ async def test_typed_requests_refresh_the_voice_history(
         await hass.async_block_till_done(wait_background_tasks=True)
     mock_client.text_command.assert_awaited_once()
     assert mock_client.get_voice_history.await_count >= 1
+
+
+LAMP = "amzn1.alexa.endpoint.11111111-2222-3333-4444-555555555555"
+OLD_LAMP = "aaaaaaaa-0000-0000-0000-000000000000"
+
+
+async def test_create_routine(hass: HomeAssistant, mock_client: MagicMock) -> None:
+    mock_client.get_smart_home_endpoints.return_value = [
+        Endpoint(id=LAMP, name="Lâmpada 1 da sala", category="LIGHT")
+    ]
+    mock_client.create_routine.return_value = Routine(id="routine-9", name="Leitura")
+    response = await _call(
+        hass,
+        "create_routine",
+        CUSTOMER_ID,
+        name="Leitura",
+        phrases="modo leitura",
+        actions=[
+            {"device": "lâmpada 1 da sala", "action": "brightness", "value": 40},
+            {"device": OLD_LAMP, "action": "turn_off"},
+            {"speak": "Boa leitura"},
+            {"type": "Alexa.Weather.Play", "operationPayload": {}},
+        ],
+    )
+    assert response == {"routine_id": "routine-9", "name": "Leitura"}
+    name, nodes = mock_client.create_routine.await_args.args
+    kwargs = mock_client.create_routine.await_args.kwargs
+    assert name == "Leitura" and kwargs == {
+        "phrases": ["modo leitura"],
+        "enabled": True,
+    }
+    lamp, old, speak, raw = nodes
+    assert lamp["operationPayload"] == {
+        "operations": [{"type": "setBrightness", "brightness": 40}],
+        "target": "11111111-2222-3333-4444-555555555555",
+    }
+    assert old["operationPayload"]["target"] == OLD_LAMP
+    assert speak["operationPayload"]["textToSpeak"] == "Boa leitura"
+    assert raw["type"] == "Alexa.Weather.Play"
+
+
+async def test_create_routine_errors(
+    hass: HomeAssistant, mock_client: MagicMock
+) -> None:
+    with pytest.raises(ServiceValidationError) as err:
+        await _call(
+            hass,
+            "create_routine",
+            name="x",
+            phrases="x",
+            actions=[{"device": "Ninguém", "action": "turn_on"}],
+        )
+    assert err.value.translation_key == "smart_home_device_not_found"
+    with pytest.raises(ServiceValidationError) as err:
+        await _call(
+            hass,
+            "create_routine",
+            name="x",
+            phrases="x",
+            actions=[{"device": LAMP, "action": "color"}],
+        )
+    assert err.value.translation_key == "action_value_required"
+
+
+async def test_update_and_delete_routine(
+    hass: HomeAssistant, mock_client: MagicMock
+) -> None:
+    mock_client.get_smart_home_endpoints.return_value = [
+        Endpoint(id=LAMP, name="Lâmpada 1 da sala", category="LIGHT")
+    ]
+    await _call(
+        hass,
+        "update_routine",
+        routine="Good night",
+        enabled=False,
+        replace_devices={OLD_LAMP: "Lâmpada 1 da sala"},
+    )
+    assert mock_client.update_routine.await_args.args == ("routine-1",)
+    assert mock_client.update_routine.await_args.kwargs == {
+        "name": None,
+        "actions": None,
+        "phrases": None,
+        "enabled": False,
+        "replace_targets": {OLD_LAMP: LAMP},
+    }
+    await _call(
+        hass,
+        "update_routine",
+        routine="routine-1",
+        actions=[
+            {"device": LAMP, "operations": [{"type": "setColor", "colorName": "blue"}]}
+        ],
+    )
+    nodes = mock_client.update_routine.await_args.kwargs["actions"]
+    assert nodes[0]["operationPayload"]["operations"] == [
+        {"type": "setColor", "colorName": "blue"}
+    ]
+    await _call(hass, "delete_routine", routine="Good night")
+    assert mock_client.delete_routine.await_args.args == ("routine-1",)
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "delete_routine", routine="Nope")

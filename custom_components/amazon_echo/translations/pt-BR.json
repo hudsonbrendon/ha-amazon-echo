@@ -704,6 +704,80 @@
           "description": "O dispositivo que repete."
         }
       }
+    },
+    "create_routine": {
+      "name": "Criar rotina",
+      "description": "Cria uma rotina da Alexa que roda quando você diz uma das frases.",
+      "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Qualquer dispositivo da conta."
+        },
+        "name": {
+          "name": "Nome",
+          "description": "Nome que aparece no app da Alexa."
+        },
+        "phrases": {
+          "name": "Frases",
+          "description": "O que você diz para rodar (\"quando você disser\")."
+        },
+        "actions": {
+          "name": "Ações",
+          "description": "Em ordem. Cada uma é {device, action, value} (action: turn_on, turn_off, brightness, color, temperature; device: nome na Alexa, entidade ou endpoint id), {device, operations} com as operações cruas do editor, {speak: texto} ou um nó de rotina cru."
+        },
+        "enabled": {
+          "name": "Ativada",
+          "description": "Se a rotina já começa ativada."
+        }
+      }
+    },
+    "update_routine": {
+      "name": "Editar rotina",
+      "description": "Altera uma rotina da Alexa. O que não for informado fica como está.",
+      "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Qualquer dispositivo da conta."
+        },
+        "routine": {
+          "name": "Rotina",
+          "description": "Nome ou identificador da rotina."
+        },
+        "name": {
+          "name": "Nome",
+          "description": "Novo nome."
+        },
+        "phrases": {
+          "name": "Frases",
+          "description": "Novas frases do gatilho de voz."
+        },
+        "actions": {
+          "name": "Ações",
+          "description": "Novas ações, substituindo todas (mesmo formato de Criar rotina)."
+        },
+        "enabled": {
+          "name": "Ativada",
+          "description": "Ativa ou desativa a rotina."
+        },
+        "replace_devices": {
+          "name": "Trocar dispositivos",
+          "description": "Dispositivo antigo → novo, por exemplo depois de trocar uma lâmpada. Nomes, entidades ou endpoint ids."
+        }
+      }
+    },
+    "delete_routine": {
+      "name": "Apagar rotina",
+      "description": "Apaga uma rotina da Alexa.",
+      "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Qualquer dispositivo da conta."
+        },
+        "routine": {
+          "name": "Rotina",
+          "description": "Nome ou identificador da rotina."
+        }
+      }
     }
   },
   "selector": {
@@ -823,6 +897,12 @@
     },
     "music_alarm_fields": {
       "message": "Um alarme com música precisa de alarm_type: music junto com music_provider e music_entity."
+    },
+    "smart_home_device_not_found": {
+      "message": "Nenhum dispositivo de casa inteligente único se chama {device}."
+    },
+    "action_value_required": {
+      "message": "A ação {action} precisa de um valor."
     }
   }
 }

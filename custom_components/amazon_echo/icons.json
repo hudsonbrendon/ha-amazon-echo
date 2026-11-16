@@ -255,6 +255,15 @@
     },
     "repeat_last_message": {
       "service": "mdi:repeat"
+    },
+    "create_routine": {
+      "service": "mdi:playlist-plus"
+    },
+    "update_routine": {
+      "service": "mdi:playlist-edit"
+    },
+    "delete_routine": {
+      "service": "mdi:playlist-remove"
     }
   }
 }
