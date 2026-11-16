@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3 - 2026-11-16
+
+- A slow-tier fetch that fails (lists, device settings, communication preferences) is tried again after 5 minutes, up to three times, instead of waiting for the next 3-hour cycle.
+
 ## 0.3.2 - 2026-11-16
 
 - Use `async_get_device_by_identifier` instead of the device-registry lookup Home Assistant deprecated.

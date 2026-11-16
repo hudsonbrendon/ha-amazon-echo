@@ -20,6 +20,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import (
+    async_call_later,
     async_track_point_in_utc_time,
     async_track_time_interval,
 )
@@ -85,6 +86,8 @@ WRITE_SETTLE_SECONDS = 1.0
 PUSH_DEBOUNCE_SECONDS = 2.0
 SLOW_CONCURRENCY = 4
 FAST_TIMEOUT_SECONDS = 90
+SLOW_RETRY_SECONDS = 300
+SLOW_RETRY_LIMIT = 3
 LAST_CALLED_LOOKBACK = timedelta(days=7)
 
 type AccountFetcher = Callable[[AmazonEchoClient], Awaitable[Any]]
@@ -235,6 +238,9 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         self._push: PushClient | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
         self._unsupported: set[tuple[str, str]] = set()
+        self._fetch_failed = False
+        self._slow_retries = 0
+        self._slow_retry: CALLBACK_TYPE | None = None
         self._discovered: dict[str, str] = {}
         self._pending: set[tuple[str, str | None]] = set()
         self._last_voice = dt_util.utcnow()
@@ -313,6 +319,9 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         )
         while self._unsubs:
             self._unsubs.pop()()
+        if self._slow_retry is not None:
+            self._slow_retry()
+            self._slow_retry = None
         if self._unsub_due is not None:
             self._unsub_due()
             self._unsub_due = None
@@ -414,6 +423,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             if device is not None:
                 self._unsupported.add((device.serial, key))
         except AmazonEchoError as err:
+            self._fetch_failed = True
             LOGGER.debug(
                 "Could not fetch %s%s: %s",
                 key,
@@ -422,15 +432,26 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             )
 
     async def _async_poll_slow(self, _now: datetime | None = None) -> None:
-        """Periodic slow tier; skipped while the cloud is unreachable."""
-        if not self.last_update_success:
-            return
-        try:
-            await self._async_update_slow(self.data)
-        except AmazonEchoAuthenticationError:
-            self.config_entry.async_start_reauth(self.hass)
-            return
-        self.async_update_listeners()
+        """Slow tier; whatever failed is tried again soon, a few times."""
+        self._fetch_failed = not self.last_update_success
+        if self.last_update_success:
+            try:
+                await self._async_update_slow(self.data)
+            except AmazonEchoAuthenticationError:
+                self.config_entry.async_start_reauth(self.hass)
+                return
+            self.async_update_listeners()
+        if self._slow_retry is not None:
+            self._slow_retry()
+            self._slow_retry = None
+        if not self._fetch_failed:
+            self._slow_retries = 0
+        elif self._slow_retries < SLOW_RETRY_LIMIT:
+            # e.g. the lists after a boot with no DNS: do not wait three hours
+            self._slow_retries += 1
+            self._slow_retry = async_call_later(
+                self.hass, SLOW_RETRY_SECONDS, self._async_poll_slow
+            )
 
     def _wanted_endpoints(
         self, data: AmazonEchoData, endpoints: list[Endpoint]

@@ -12,6 +12,6 @@
   "issue_tracker": "https://github.com/hudsonbrendon/ha-amazon-echo/issues",
   "loggers": ["amazon_echo"],
   "requirements": ["python-amazon-echo==0.3.0"],
-  "version": "0.3.2",
+  "version": "0.3.3",
   "zeroconf": ["_spotify-connect._tcp.local.", "_amzn-wplay._tcp.local."]
 }

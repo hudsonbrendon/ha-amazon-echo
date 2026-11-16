@@ -565,3 +565,27 @@ async def test_slow_network_at_boot_retries_setup(
         await hass.config_entries.async_setup(mock_config_entry.entry_id)
         await hass.async_block_till_done()
     assert mock_config_entry.state is ConfigEntryState.SETUP_RETRY
+
+
+async def test_failed_slow_fetch_is_retried_soon(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Lists that failed at startup appear minutes later, not hours later."""
+    good = mock_client.get_lists.side_effect
+    result = mock_client.get_lists.return_value
+    mock_client.get_lists.side_effect = AmazonEchoConnectionError("no DNS at boot")
+    await setup_integration(hass, mock_config_entry)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert not hass.states.async_entity_ids("todo")
+
+    mock_client.get_lists.side_effect = good
+    mock_client.get_lists.return_value = result
+    freezer.tick(timedelta(seconds=301))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert hass.states.async_entity_ids("todo")
