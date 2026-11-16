@@ -122,9 +122,12 @@ account.
 
 ### Removal
 
-Delete the entry under Settings → Devices & services. To also remove the
-registration from Amazon (browser sign-in only), remove "Amazon Echo for
-Home Assistant" under *Manage Your Content and Devices* on the Amazon site.
+Delete the entry under Settings → Devices & services. An entry signed in
+through the browser also takes its registration off the Amazon account
+(`auth/deregister`), so nothing is left under *Manage Your Content and
+Devices*. If Amazon cannot be reached, a warning is logged and the
+registration can be removed there by hand. Sessions imported from Alexa Media
+Player are never deregistered: they belong to that integration.
 
 ## Options
 

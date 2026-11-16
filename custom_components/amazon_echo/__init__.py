@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import Event, HomeAssistant, callback
@@ -9,12 +11,19 @@ from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 
-from amazon_echo import AmazonEchoClient, Credentials
+from amazon_echo import (
+    AmazonEchoClient,
+    AmazonEchoError,
+    Credentials,
+    deregister_device,
+)
 
 from .const import CONF_CREDENTIALS, DOMAIN, PLATFORMS
 from .coordinator import AmazonEchoCoordinator
 from .entity import account_device_info
 from .services import async_setup_services
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -73,6 +82,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: AmazonEchoConfigEntry) -
 async def async_unload_entry(hass: HomeAssistant, entry: AmazonEchoConfigEntry) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: AmazonEchoConfigEntry) -> None:
+    """Take this integration's registration off the Amazon account.
+
+    Best effort: removal never fails because Amazon is unreachable. Sessions
+    imported from ``alexa_media`` are left alone (they are not ours).
+    """
+    credentials = Credentials.from_dict(entry.data[CONF_CREDENTIALS])
+    if credentials.source == "alexa_media":
+        return
+    try:
+        await deregister_device(async_get_clientsession(hass), credentials)
+    except AmazonEchoError as err:
+        _LOGGER.warning(
+            "Could not remove the registration from the Amazon account (%s); "
+            "remove it in the Alexa app under Your devices",
+            err,
+        )
 
 
 async def async_remove_config_entry_device(

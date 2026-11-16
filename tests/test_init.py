@@ -14,7 +14,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.amazon_echo import async_remove_config_entry_device
+from custom_components.amazon_echo import (
+    async_remove_config_entry_device,
+    async_remove_entry,
+)
 from custom_components.amazon_echo.const import CONF_CREDENTIALS, CONF_HOSTS, DOMAIN
 
 from .conftest import (
@@ -28,6 +31,7 @@ from .conftest import (
     GROUP,
     FakePush,
     build_devices,
+    credentials,
     setup_integration,
 )
 
@@ -147,3 +151,35 @@ async def test_cancelled_setup_is_retried_after_startup(
     hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
     await hass.async_block_till_done()
     assert mock_config_entry.state is ConfigEntryState.LOADED
+
+
+async def test_remove_entry_deregisters(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+) -> None:
+    with patch(
+        "custom_components.amazon_echo.deregister_device", AsyncMock()
+    ) as deregister:
+        await async_remove_entry(hass, mock_config_entry)
+    deregister.assert_awaited_once()
+    assert deregister.await_args.args[1].source != "alexa_media"
+
+
+async def test_remove_entry_never_fails(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+) -> None:
+    with patch(
+        "custom_components.amazon_echo.deregister_device",
+        AsyncMock(side_effect=AmazonEchoConnectionError("down")),
+    ):
+        await async_remove_entry(hass, mock_config_entry)
+
+
+async def test_remove_entry_leaves_imported_sessions(hass: HomeAssistant) -> None:
+    creds = credentials()
+    creds.source = "alexa_media"
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_CREDENTIALS: creds.to_dict()})
+    with patch(
+        "custom_components.amazon_echo.deregister_device", AsyncMock()
+    ) as deregister:
+        await async_remove_entry(hass, entry)
+    deregister.assert_not_awaited()
