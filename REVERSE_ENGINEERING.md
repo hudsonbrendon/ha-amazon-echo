@@ -22,7 +22,7 @@ Date: 2026-11-15. Raw evidence (real account responses) is kept privately and is
 | TCP 55442 | HTTP (civetweb-like, `DAV: 1`), every path 404. Whole-home-audio distribution | Liveness only |
 | TCP 55443 | TLS 1.2, self-signed `O=WHALEXA`, **requires client certificate** | No |
 | TCP 55445 | TLS, resets | No |
-| TCP 1080 (Echo Pop and Echo Dot 3rd gen; not on Echo Plus) | SOCKS5, accepts method `00` (no auth) on greeting. CONNECT not tested | Not used. Worth knowing as a security observation |
+| TCP 1080 (Echo Pop and Echo Dot 3rd gen; not on Echo Plus) | SOCKS5, accepts method `00` (no auth) on greeting. Per the firmware (§7.2) it is a Wi-Fi Direct helper that whitelists device id and destination | Not used |
 | TCP 8888 (Pop, Dot 3rd gen, Show 5) | resets | No |
 | Fire TV: `_amzn-wplay._tcp`, `_matterd._udp` (commissioner), `_adb._tcp` | WhisperPlay device manager, ADB | ADB is already covered by HA `androidtv` |
 
@@ -147,7 +147,7 @@ Live check on an Echo Plus, plain port 55442, GET only: `/control`, `/connectivi
 
 **Consequence:** a third party cannot join the local control plane — its certificate would never be in the trust list that Amazon's cloud distributes. This turns "the local ports looked closed" into "local control is cryptographically reserved to devices of the same Amazon account". The integration's local side (discovery, IP/MAC, reachability, Spotify state) is therefore the full extent of what the LAN offers.
 
-Not done: no Echo firmware image was obtained, so nothing Echo-specific was disassembled; the Fire TV library is the same component but a different build.
+The Echo's own firmware was obtained and analysed afterwards — see §7.2.
 
 ### 7.1 The same checks on every Echo, captured by REA
 
@@ -160,3 +160,24 @@ Not done: no Echo firmware image was obtained, so nothing Echo-specific was disa
 | Spotify zeroconf on 4070 | answers on 5 of 7 (`Echo_Plus`, `Echo_Pop`, `Echo_Dot`, library `3.209.367`); the Echo Show 5 and one Echo Dot do not serve it |
 
 The certificate organisation, the client-certificate requirement and the route behaviour are exactly what the Fire TV's `libwhadjni.so` describes, so the control-plane conclusion above applies to the Echos themselves, not only to the Fire TV.
+
+### 7.2 The Echo's own firmware (2026-11-16)
+
+A public index of Amazon's OTA packages (`FTVDB/FTVDB` on GitHub) lists the official CDN URLs. The package for the Echo Dot 3rd gen
+(`donut_puffin`, model `AEODN`) with version number `0013323246980` — the exact software version four of the Echos on this LAN report — was
+downloaded from Amazon's CDN (`d1s31zyz7dcc2d.cloudfront.net`), MD5 `8f0a2c73…` matching the index, 117 MB, full A/B OTA signed with release keys.
+
+| REA step | Evidence | Result |
+|---|---|---|
+| `open_binary` + `inspect_artifact` on the OTA | `ev_d1661d94…` (sha256 `ecf40ee5…`) | 13 entries, all hashes verified; `payload.bin` holds boot, lk, preloader, tee and a 1 GiB ext4 `system` image |
+| Ghidra string/symbol search on `system/lib/libamazonwha.so` (sha256 `590521ce…`, ARM) | `ev_f7ffba51…` | 392 matches |
+
+`libamazonwha.so` is the Echo's whole-home-audio library and contains the same control plane as the Fire TV build: `HttpServerCivetWeb`, the routes
+`/audio`, `/audiolocal`, `/control`, `/connectivity-test`, `/assignments/v2`, `HttpServer:installTrustedClientCertificate`, `SSL_CTX_set_verify`,
+`Device:sendRemoteCommand:UntrustedClientCert … doesn't trust us`, and "requesting a sync from WHACS". So the conclusion in §7 is now read from the
+firmware that is actually running on the Echo Dots, not inferred from another device.
+
+Other things the firmware shows:
+- **The SOCKS5 service on port 1080 is not an open proxy.** `init.socks.rc` starts `/system/bin/socks -i p2p0 -p 1080`: it is meant for the Wi-Fi Direct interface and, unless started with `-w`, checks both the client's device id and the requested host against a whitelist ("client's deviceID is not in whitelist", "client's requested remote host is not in whitelist"). The no-auth greeting observed in §2 is accepted before that check. (Strings only; the whitelist check was not exercised.)
+- Local voice handling exists on the device (`AlexaHybridExecutionControllerLitespeed`, skills for alerts, timers, stop and volume), driven by the device's own microphone — there is no network entry point to it in the init services.
+- `SmartHomed`, `gadgetsd`, `puffinmrmd` and Sidewalk services are present; none registers a LAN API beyond what §2 lists.
