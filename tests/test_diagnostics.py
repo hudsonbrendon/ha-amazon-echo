@@ -85,4 +85,5 @@ async def test_diagnostics_are_redacted(
     assert data["lists"] == [
         {"kind": "shopping", "items": 2},
         {"kind": "todo", "items": 0},
+        {"kind": "custom", "items": 0},
     ]

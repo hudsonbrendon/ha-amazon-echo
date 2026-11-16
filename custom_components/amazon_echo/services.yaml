@@ -62,12 +62,8 @@ create_alarm:
       example: "2026-12-01 07:00:00"
       selector:
         datetime:
-    label:
-      example: Wake up
-      selector:
-        text:
     recurrence:
-      example: P1D
+      example: DAILY
       selector:
         text:
 
@@ -138,7 +134,7 @@ get_voice_history:
       selector:
         number:
           min: 1
-          max: 100
+          max: 50
           mode: box
 
 bluetooth_connect:

@@ -6,8 +6,8 @@
         "title": "Conectar sua conta Amazon",
         "description": "Escolha como entrar. O Home Assistant não pede nem guarda a sua senha.",
         "menu_options": {
-          "import_alexa_media": "Reaproveitar a sessão do Alexa Media Player",
-          "browser": "Entrar pelo meu navegador"
+          "import_alexa_media": "Reaproveitar a sessão do Alexa Media Player (sem tempo real enquanto ele estiver configurado)",
+          "browser": "Entrar na Amazon pelo seu navegador"
         }
       },
       "import_alexa_media": {
@@ -38,16 +38,16 @@
         "title": "Entrar de novo",
         "description": "A Amazon não aceita mais a sessão guardada. Escolha como entrar de novo.",
         "menu_options": {
-          "import_alexa_media": "Reaproveitar a sessão do Alexa Media Player",
-          "browser": "Entrar pelo meu navegador"
+          "import_alexa_media": "Reaproveitar a sessão do Alexa Media Player (sem tempo real enquanto ele estiver configurado)",
+          "browser": "Entrar na Amazon pelo seu navegador"
         }
       },
       "reconfigure": {
         "title": "Trocar a sessão da Amazon",
         "description": "Escolha como entrar. Precisa ser a mesma conta Amazon.",
         "menu_options": {
-          "import_alexa_media": "Reaproveitar a sessão do Alexa Media Player",
-          "browser": "Entrar pelo meu navegador"
+          "import_alexa_media": "Reaproveitar a sessão do Alexa Media Player (sem tempo real enquanto ele estiver configurado)",
+          "browser": "Entrar na Amazon pelo seu navegador"
         }
       }
     },
@@ -81,7 +81,7 @@
         },
         "data_description": {
           "scan_interval": "Só uma reserva enquanto o push está conectado. Com o push fora do ar a conta é consultada a cada 60 segundos.",
-          "enable_push": "Volume, reprodução, não perturbe, alarmes e comandos de voz chegam na hora em que acontecem.",
+          "enable_push": "Volume, reprodução, não perturbe, alarmes e comandos de voz chegam na hora em que acontecem. Não funciona enquanto o Alexa Media Player estiver configurado e esta conta usar a sessão importada dele.",
           "enable_local": "Endereço IP, alcance na rede local e usuário do Spotify, lidos do próprio dispositivo a cada 60 segundos."
         }
       }
@@ -91,6 +91,9 @@
     "binary_sensor": {
       "online": {
         "name": "On-line"
+      },
+      "push_connected": {
+        "name": "Atualizações em tempo real"
       },
       "local_reachable": {
         "name": "Alcançável na rede local"
@@ -254,6 +257,12 @@
     "todo": {
       "list": {
         "name": "{name}"
+      },
+      "shopping_list": {
+        "name": "Lista de compras"
+      },
+      "todo_list": {
+        "name": "Lista de tarefas"
       }
     }
   },
@@ -326,13 +335,9 @@
           "name": "Horário",
           "description": "Data e hora do alarme."
         },
-        "label": {
-          "name": "Nome",
-          "description": "Nome opcional do alarme."
-        },
         "recurrence": {
           "name": "Repetição",
-          "description": "Repetição opcional em ISO 8601, por exemplo P1D para todos os dias."
+          "description": "Repetição opcional: DAILY, WEEKDAYS, WEEKENDS, WEEKLY ou uma lista de dias como MO,WE,FR."
         }
       }
     },
@@ -465,6 +470,12 @@
       }
     }
   },
+  "issues": {
+    "shared_session": {
+      "title": "Atualizações em tempo real desligadas em {name}",
+      "description": "Esta conta usa a sessão importada do Alexa Media Player. A Amazon permite uma única conexão em tempo real por login, então, enquanto o Alexa Media Player estiver configurado, o Amazon Echo consulta as mudanças a cada 60 segundos em vez de recebê-las na hora.\n\nPara ter atualizações em tempo real, escolha um caminho:\n\n- Abra a integração Amazon Echo, escolha **Reconfigurar** e depois **Entrar na Amazon pelo seu navegador**. Assim esta integração passa a ter um login só dela.\n- Ou remova (ou desative) o Alexa Media Player e recarregue o Amazon Echo."
+    }
+  },
   "exceptions": {
     "invalid_auth": {
       "message": "A Amazon não aceita mais a sessão guardada. Entre de novo."
@@ -504,6 +515,9 @@
     },
     "item_not_found": {
       "message": "O item {item} não está mais na lista."
+    },
+    "invalid_value": {
+      "message": "Valor inválido: {error}"
     }
   }
 }

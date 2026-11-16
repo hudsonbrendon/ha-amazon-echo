@@ -139,14 +139,16 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
         return self._media.image_url
 
     @property
-    def media_duration(self) -> float | None:
+    def media_duration(self) -> int | None:
         """Duration in seconds."""
-        return self._media.duration
+        duration = self._media.duration
+        return None if duration is None else int(duration)
 
     @property
-    def media_position(self) -> float | None:
+    def media_position(self) -> int | None:
         """Position in seconds."""
-        return self._media.position
+        position = self._media.position
+        return None if position is None else int(position)
 
     @property
     def media_position_updated_at(self) -> datetime | None:

@@ -13,7 +13,7 @@ from homeassistant.exceptions import (
     HomeAssistantError,
     ServiceValidationError,
 )
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -38,6 +38,7 @@ from amazon_echo import (
 )
 
 from .const import (
+    ALEXA_MEDIA_DOMAIN,
     CAP_AUDIO_PLAYER,
     CONF_ENABLE_LOCAL,
     CONF_ENABLE_PUSH,
@@ -45,6 +46,7 @@ from .const import (
     CONF_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    ISSUE_SHARED_SESSION,
     LOCAL_INTERVAL,
     LOGGER,
     PUSH_DOWN_SCAN_INTERVAL,
@@ -185,24 +187,49 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             entry.async_create_background_task(
                 self.hass, self.async_poll_local(), f"{DOMAIN}_local"
             )
-        if entry.options.get(CONF_ENABLE_PUSH, True):
-            self._push = PushClient(
-                self.client, self._handle_push, on_state=self._handle_push_state
+        if not entry.options.get(CONF_ENABLE_PUSH, True):
+            return
+        self._push = PushClient(
+            self.client, self._handle_push, on_state=self._handle_push_state
+        )
+        # Amazon allows one push stream per app registration and the newest
+        # connection wins: on a session imported from Alexa Media Player the
+        # two integrations would close each other's stream about every second.
+        shared = self.client.credentials.source == ALEXA_MEDIA_DOMAIN and any(
+            not other.disabled_by
+            for other in self.hass.config_entries.async_entries(ALEXA_MEDIA_DOMAIN)
+        )
+        if shared:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                f"{ISSUE_SHARED_SESSION}_{entry.entry_id}",
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key=ISSUE_SHARED_SESSION,
+                translation_placeholders={"name": entry.title},
             )
-            try:
-                await self._push.start()
-            except AmazonEchoError as err:
-                LOGGER.warning("Push channel unavailable, polling instead: %s", err)
-                self._handle_push_state(False)
+            self._handle_push_state(False)
+            return
+        try:
+            await self._push.start()
+        except AmazonEchoError as err:
+            LOGGER.warning("Push channel unavailable, polling instead: %s", err)
+            self._handle_push_state(False)
 
     async def async_stop(self) -> None:
         """Stop timers and the push channel."""
+        # Re-created on the next setup if the session is still shared.
+        ir.async_delete_issue(
+            self.hass, DOMAIN, f"{ISSUE_SHARED_SESSION}_{self.config_entry.entry_id}"
+        )
         while self._unsubs:
             self._unsubs.pop()()
         self._push_debouncer.async_shutdown()
-        if self._push is not None:
-            await self._push.stop()
-            self._push = None
+        # Cleared first: stopping reports "disconnected", which must not resync.
+        push, self._push = self._push, None
+        if push is not None:
+            await push.stop()
 
     # ------------------------------------------------------------------ #
     # Cloud polling
@@ -322,11 +349,14 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
     @callback
     def _handle_push_state(self, connected: bool) -> None:
         """Poll faster while the push channel is down; resync when it is back."""
+        if self._push is None:
+            return
         previous, self.push_connected = self.push_connected, connected
         scan = self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         self.update_interval = timedelta(
             seconds=scan if connected else min(scan, PUSH_DOWN_SCAN_INTERVAL)
         )
+        self.async_update_listeners()
         if previous is None and connected:
             return  # first connection right after the first refresh
         self.config_entry.async_create_background_task(
@@ -337,8 +367,6 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
     def _handle_push(self, event: PushEvent) -> None:
         """Apply a push event to the snapshot and schedule what must be re-read."""
         data = self.data
-        if data is None:
-            return
         serial, payload = event.device_serial, event.payload
         device = data.devices.get(serial) if serial else None
         if event.command == "PUSH_VOLUME_CHANGE" and serial:
@@ -503,6 +531,12 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
                 translation_key="communication_error",
+                translation_placeholders={"error": str(err)},
+            ) from err
+        except ValueError as err:  # the library refused an argument
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="invalid_value",
                 translation_placeholders={"error": str(err)},
             ) from err
         self.async_update_listeners()

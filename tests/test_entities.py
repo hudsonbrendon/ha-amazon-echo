@@ -128,11 +128,13 @@ async def test_entities_follow_what_each_device_reports(hass: HomeAssistant) -> 
         "notify.announce",
     }
     assert by_device[CUSTOMER_ID] == {
+        "binary_sensor.push_connected",
         "switch.whisper_mode",
         "switch.adaptive_volume",
         "button.routine_routine-1",
         "todo.list_list-shop",
         "todo.list_list-todo",
+        "todo.list_list-custom",
     }
 
 
@@ -180,8 +182,9 @@ async def test_states(hass: HomeAssistant) -> None:
         "media_player.kitchen_echo": "playing",
         "media_player.office_show": "idle",
         "media_player.living_room_tv": "off",
-        "todo.test_account_shopping": "1",
-        "todo.test_account_to_do": "0",
+        "todo.test_account_shopping_list": "1",
+        "todo.test_account_to_do_list": "0",
+        "todo.test_account_camping": "0",  # custom lists keep their own name
     }
     assert {entity_id: _state(hass, entity_id) for entity_id in expected} == expected
 
@@ -199,7 +202,10 @@ async def test_next_notification_sensors(
         "alarm-off",
         "alarm-soon",
         "alarm-late",
+        "alarm-off-untimed-1",
+        "alarm-off-untimed-2",
     ]
+    assert state.attributes["items"][-1]["when"] is None
     assert state.attributes["items"][1]["label"] == "Soon"
     timer = hass.states.get("sensor.kitchen_echo_next_timer")
     assert [item["id"] for item in timer.attributes["items"]] == ["timer-1"]
@@ -227,11 +233,9 @@ async def test_switches(hass: HomeAssistant, mock_client: MagicMock) -> None:
     }
 
     await _call(hass, "switch", "turn_off", "switch.living_room_tv_ambient_mode")
-    assert mock_client.call_feature.await_args.args == (
-        "endpoint-firetv",
-        "ambientMode",
-        "turnOff",
-    )
+    call = mock_client.call_feature.await_args
+    assert call.args == ("endpoint-firetv", "toggle", "turnOff")
+    assert call.kwargs == {"instance": "FTV.AmbientMode"}
 
     await _call(hass, "switch", "turn_on", "switch.test_account_whisper_mode")
     mock_client.set_whisper_mode.assert_awaited_once_with(True)
@@ -379,7 +383,7 @@ async def test_notify(hass: HomeAssistant, mock_client: MagicMock) -> None:
 
 
 async def test_todo(hass: HomeAssistant, mock_client: MagicMock) -> None:
-    entity_id = "todo.test_account_shopping"
+    entity_id = "todo.test_account_shopping_list"
     response = await hass.services.async_call(
         "todo",
         "get_items",

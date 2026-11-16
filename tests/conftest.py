@@ -5,10 +5,11 @@ from __future__ import annotations
 from collections.abc import Generator
 from datetime import timedelta
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, create_autospec, patch
 
 from amazon_echo import (
     Account,
+    AmazonEchoClient,
     AmazonEchoNotSupportedError,
     AuthorizeRequest,
     AuxPort,
@@ -183,6 +184,21 @@ def build_notifications() -> list[Notification]:
             device_type="TYPEECHO",
             when=now + timedelta(minutes=5),
         ),
+        # Amazon gives no trigger time for some switched-off alarms.
+        Notification(
+            id="alarm-off-untimed-1",
+            kind="alarm",
+            status="OFF",
+            device_serial=ECHO,
+            device_type="TYPEECHO",
+        ),
+        Notification(
+            id="alarm-off-untimed-2",
+            kind="alarm",
+            status="OFF",
+            device_serial=ECHO,
+            device_type="TYPEECHO",
+        ),
         Notification(
             id="timer-1",
             kind="timer",
@@ -203,7 +219,8 @@ class FakePush:
         self.on_event: Any = None
         self.on_state: Any = None
         self.start = AsyncMock()
-        self.stop = AsyncMock()
+        # Like the real client, stopping reports the stream as closed.
+        self.stop = AsyncMock(side_effect=lambda: self.on_state(False))
 
     def __call__(self, client: Any, on_event: Any, *, on_state: Any = None) -> FakePush:
         self.on_event, self.on_state = on_event, on_state
@@ -230,8 +247,12 @@ def no_delays() -> Generator[None]:
 
 @pytest.fixture
 def mock_client() -> Generator[MagicMock]:
-    """Patch AmazonEchoClient in the integration and the config flow."""
-    client = MagicMock()
+    """Patch AmazonEchoClient in the integration and the config flow.
+
+    The mock is autospecced from the real class, so a call the library does
+    not have (or with the wrong arguments) fails the test.
+    """
+    client = create_autospec(AmazonEchoClient, instance=True)
     state: dict[str, Any] = {
         "get_account": Account(
             customer_id=CUSTOMER_ID, name=TITLE, email="user@example.com"
@@ -264,76 +285,74 @@ def mock_client() -> Generator[MagicMock]:
         "get_lists": [
             EchoList(id="list-shop", name="Shopping", kind="shopping"),
             EchoList(id="list-todo", name="To-do", kind="todo"),
+            EchoList(id="list-custom", name="Camping", kind="custom"),
         ],
         "get_voice_history": [],
     }
     for name, value in state.items():
-        setattr(client, name, AsyncMock(return_value=value))
-    client.get_devices = AsyncMock(side_effect=lambda: build_devices())
-    client.get_media = AsyncMock(
-        side_effect=lambda device: (
-            MediaState(
-                state="playing",
-                title="Fake Song",
-                artist="Fake Artist",
-                album="Fake Album",
-                image_url="https://example.com/cover.jpg",
-                duration=200.0,
-                position=30.0,
-                provider="Spotify",
-                shuffle=False,
-                repeat=True,
-                can_next=True,
-                can_previous=True,
-                can_seek=True,
-                volume=40,
-            )
-            if device.serial == ECHO
-            else MediaState()
+        getattr(client, name).return_value = value
+    client.get_devices.side_effect = lambda: build_devices()
+    client.get_media.side_effect = lambda device: (
+        MediaState(
+            state="playing",
+            title="Fake Song",
+            artist="Fake Artist",
+            album="Fake Album",
+            image_url="https://example.com/cover.jpg",
+            duration=200.0,
+            position=30.0,
+            provider="Spotify",
+            shuffle=False,
+            repeat=True,
+            can_next=True,
+            can_previous=True,
+            can_seek=True,
+            volume=40,
         )
+        if device.serial == ECHO
+        else MediaState()
     )
-    client.get_list_items = AsyncMock(
-        side_effect=lambda list_id: (
-            [
-                ListItem(id="item-1", name="Milk"),
-                ListItem(id="item-2", name="Bread", completed=True),
-            ]
-            if list_id == "list-shop"
-            else []
-        )
+    client.get_list_items.side_effect = lambda list_id: (
+        [
+            ListItem(id="item-1", name="Milk"),
+            ListItem(id="item-2", name="Bread", completed=True),
+        ]
+        if list_id == "list-shop"
+        else []
     )
 
     # Per-device slow tier: the Echo and the Show answer, the rest do not.
-    def per_device(values: dict[str, Any]) -> AsyncMock:
-        def get(device: Device, *args: Any) -> Any:
+    def per_device(method: str, values: dict[str, Any]) -> None:
+        def get(device: Device) -> Any:
             if device.serial not in values:
                 raise AmazonEchoNotSupportedError("not supported")
             return values[device.serial]
 
-        return AsyncMock(side_effect=get)
+        getattr(client, method).side_effect = get
 
-    client.get_wifi = per_device(
-        {ECHO: ("FakeWiFi", ECHO_MAC), SHOW: ("FakeWiFi", "aa:bb:cc:00:00:02")}
+    per_device(
+        "get_wifi",
+        {ECHO: ("FakeWiFi", ECHO_MAC), SHOW: ("FakeWiFi", "aa:bb:cc:00:00:02")},
     )
-    client.get_equalizer = per_device({ECHO: {"bass": 1, "mid": 0, "treble": -2}})
-    client.get_earcons = per_device({ECHO: {"wake_word": True, "end_of_speech": False}})
-    client.get_aux = per_device(
-        {ECHO: [AuxPort(id="aux0", direction="INPUT", plugged=True)], SHOW: []}
+    per_device("get_equalizer", {ECHO: {"bass": 1, "mid": 0, "treble": -2}})
+    per_device("get_earcons", {ECHO: {"wake_word": True, "end_of_speech": False}})
+    per_device(
+        "get_aux",
+        {ECHO: [AuxPort(id="aux0", direction="INPUT", plugged=True)], SHOW: []},
     )
-    client.get_available_wake_words = per_device(
-        {ECHO: ["ALEXA", "ECHO", "COMPUTER"], SHOW: ["ALEXA", "ECHO"]}
+    per_device(
+        "get_available_wake_words",
+        {ECHO: ["ALEXA", "ECHO", "COMPUTER"], SHOW: ["ALEXA", "ECHO"]},
     )
-    client.get_alarm_sounds = per_device(
-        {ECHO: {"sound-1": "Simple", "sound-2": "Nimble"}}
-    )
-    client.get_default_alarm_sound = per_device({ECHO: "sound-1"})
+    per_device("get_alarm_sounds", {ECHO: {"sound-1": "Simple", "sound-2": "Nimble"}})
+    per_device("get_default_alarm_sound", {ECHO: "sound-1"})
 
     def get_setting(device: Device, key: str) -> Any:
         if device.serial != SHOW or key not in SHOW_SETTINGS:
             raise AmazonEchoNotSupportedError(key)
         return SHOW_SETTINGS[key]
 
-    client.get_setting = AsyncMock(side_effect=get_setting)
+    client.get_setting.side_effect = get_setting
 
     for name in (
         "close",
@@ -367,10 +386,10 @@ def mock_client() -> Generator[MagicMock]:
         "delete_list_item",
         "call_feature",
     ):
-        setattr(client, name, AsyncMock(return_value=None))
+        getattr(client, name).return_value = None
     created = build_notifications()[0]
     for name in ("create_alarm", "create_timer", "create_reminder"):
-        setattr(client, name, AsyncMock(return_value=created))
+        getattr(client, name).return_value = created
 
     def factory(creds: Credentials, **kwargs: Any) -> MagicMock:
         client.credentials = creds

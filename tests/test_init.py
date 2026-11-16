@@ -58,8 +58,10 @@ async def test_setup_and_unload(
     # Alexa app registrations never become devices.
     assert registry.async_get_device_by_identifier((DOMAIN, APP), ENTRY_ID) is None
 
+    polls = mock_client.get_devices.await_count
     assert await hass.config_entries.async_unload(mock_config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert mock_client.get_devices.await_count == polls  # no resync on the way out
     assert mock_config_entry.state is ConfigEntryState.NOT_LOADED
     mock_push.stop.assert_awaited_once()
     mock_client.close.assert_awaited_once()

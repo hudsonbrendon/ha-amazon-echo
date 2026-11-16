@@ -133,6 +133,12 @@
     "todo": {
       "list": {
         "default": "mdi:format-list-checks"
+      },
+      "shopping_list": {
+        "default": "mdi:cart-outline"
+      },
+      "todo_list": {
+        "default": "mdi:format-list-checks"
       }
     }
   },

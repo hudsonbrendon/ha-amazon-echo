@@ -72,6 +72,14 @@ BINARY_SENSORS: tuple[AmazonEchoBinarySensorDescription, ...] = (
 )
 
 
+PUSH_CONNECTED = BinarySensorEntityDescription(
+    key="push_connected",
+    translation_key="push_connected",
+    device_class=BinarySensorDeviceClass.CONNECTIVITY,
+    entity_category=EntityCategory.DIAGNOSTIC,
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: AmazonEchoConfigEntry,
@@ -81,6 +89,7 @@ async def async_setup_entry(
     async_add_device_entities(
         entry, async_add_entities, BINARY_SENSORS, AmazonEchoBinarySensor
     )
+    async_add_entities([AmazonEchoPushSensor(entry.runtime_data, PUSH_CONNECTED)])
 
 
 class AmazonEchoBinarySensor(AmazonEchoEntity, BinarySensorEntity):
@@ -102,3 +111,14 @@ class AmazonEchoBinarySensor(AmazonEchoEntity, BinarySensorEntity):
     def is_on(self) -> bool | None:
         """Current value."""
         return self.entity_description.is_on_fn(self.data, self.device)
+
+
+class AmazonEchoPushSensor(AmazonEchoEntity, BinarySensorEntity):
+    """Whether real-time updates are arriving (account device)."""
+
+    _local = True  # says "off" instead of going unavailable with the cloud
+
+    @property
+    def is_on(self) -> bool:
+        """True while the push stream is open."""
+        return bool(self.coordinator.push_connected)

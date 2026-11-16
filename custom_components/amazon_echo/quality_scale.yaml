@@ -59,9 +59,7 @@ rules:
   exception-translations: done
   icon-translations: done
   reconfiguration-flow: done
-  repair-issues:
-    status: exempt
-    comment: Failures are reported through reauth and entity availability; nothing needs a repair flow.
+  repair-issues: done
   stale-devices: done
 
   # Platinum

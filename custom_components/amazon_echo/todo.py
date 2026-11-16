@@ -22,6 +22,8 @@ from .entity import AmazonEchoEntity, async_add_dynamic
 
 PARALLEL_UPDATES = 0
 
+BUILT_IN = {"shopping": "shopping_list", "todo": "todo_list"}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -40,7 +42,6 @@ async def async_setup_entry(
 class AmazonEchoTodoList(AmazonEchoEntity, TodoListEntity):
     """An Alexa shopping, to-do or custom list."""
 
-    _attr_translation_key = "list"
     _attr_supported_features = (
         TodoListEntityFeature.CREATE_TODO_ITEM
         | TodoListEntityFeature.UPDATE_TODO_ITEM
@@ -51,9 +52,10 @@ class AmazonEchoTodoList(AmazonEchoEntity, TodoListEntity):
         """Initialise the entity of one list."""
         super().__init__(coordinator, EntityDescription(key=f"list_{list_id}"))
         self._list_id = list_id
-        self._attr_translation_placeholders = {
-            "name": coordinator.data.lists[list_id][0].name
-        }
+        echo_list = coordinator.data.lists[list_id][0]
+        # The built-in lists have no name of their own: translate by kind.
+        self._attr_translation_key = BUILT_IN.get(echo_list.kind, "list")
+        self._attr_translation_placeholders = {"name": echo_list.name}
 
     @property
     def available(self) -> bool:

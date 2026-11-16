@@ -109,19 +109,21 @@ async def test_create_and_delete_notifications(
         hass,
         "create_alarm",
         time="2030-01-02 07:00:00",
-        label="Wake up",
-        recurrence="P1D",
+        recurrence="DAILY",
     )
     device, when = mock_client.create_alarm.await_args.args
     assert device.serial == ECHO
     # A naive time is local time.
     assert when == dt_util.as_local(dt_util.parse_datetime("2030-01-02 07:00:00"))
     assert when.tzinfo is not None
-    assert mock_client.create_alarm.await_args.kwargs == {
-        "label": "Wake up",
-        "recurrence": "P1D",
-    }
+    assert mock_client.create_alarm.await_args.kwargs == {"recurrence": "DAILY"}
     assert response["id"] == "alarm-late" and response["kind"] == "alarm"
+
+    # A recurrence the library does not understand is a validation error.
+    mock_client.create_alarm.side_effect = ValueError("Unsupported recurrence: 'X'")
+    with pytest.raises(ServiceValidationError) as err:
+        await _call(hass, "create_alarm", time="2030-01-02 07:00:00", recurrence="X")
+    assert err.value.translation_key == "invalid_value"
 
     response = await _call(hass, "create_timer", duration="00:10:00", label="Pasta")
     assert mock_client.create_timer.await_args.args[1] == timedelta(minutes=10)
@@ -145,15 +147,16 @@ async def test_get_notifications(hass: HomeAssistant) -> None:
         "alarm-late",
         "alarm-soon",
         "alarm-off",
+        "alarm-off-untimed-1",
+        "alarm-off-untimed-2",
         "timer-1",
     }
     timer = next(n for n in response["notifications"] if n["id"] == "timer-1")
     assert timer["remaining"] == 600 and timer["label"] == "Pasta"
     assert (await _call(hass, "get_notifications", SHOW))["notifications"] == []
     # The account device returns everything.
-    assert (
-        len((await _call(hass, "get_notifications", CUSTOMER_ID))["notifications"]) == 4
-    )
+    everything = await _call(hass, "get_notifications", CUSTOMER_ID)
+    assert len(everything["notifications"]) == 6
 
 
 async def test_get_voice_history(hass: HomeAssistant, mock_client: MagicMock) -> None:

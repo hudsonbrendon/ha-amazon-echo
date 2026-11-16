@@ -17,8 +17,10 @@ from amazon_echo import (
     VoiceRecord,
 )
 from freezegun.api import FrozenDateTimeFactory
+from homeassistant.config_entries import ConfigEntryDisabler
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
@@ -26,9 +28,11 @@ from pytest_homeassistant_custom_component.common import (
 )
 
 from custom_components.amazon_echo.const import (
+    CONF_CREDENTIALS,
     CONF_ENABLE_LOCAL,
     CONF_ENABLE_PUSH,
     CONF_HOSTS,
+    DOMAIN,
     SLOW_INTERVAL,
 )
 
@@ -311,7 +315,7 @@ async def test_push_events_update_the_snapshot(
     mock_client.get_list_items.return_value = [ListItem(id="item-9", name="Eggs")]
     mock_push.emit("PUSH_LIST_ITEM_CHANGE")
     await _settle(hass)
-    assert hass.states.get("todo.test_account_shopping").state == "1"
+    assert hass.states.get("todo.test_account_shopping_list").state == "1"
 
     # Unknown or state-less commands are only logged.
     mock_push.emit("PUSH_SOMETHING_NEW", ECHO, anything=1)
@@ -441,3 +445,68 @@ async def test_media_failure_and_slow_tier_auth_error(
     await coordinator._async_poll_slow()
     await _settle(hass)
     assert len(hass.config_entries.flow.async_progress()) == 1
+
+
+async def test_no_push_on_a_session_shared_with_alexa_media(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """One push stream per registration: on a shared session, poll and say so."""
+    imported = {**mock_config_entry.data[CONF_CREDENTIALS], "source": "alexa_media"}
+    mock_config_entry = MockConfigEntry(
+        domain=mock_config_entry.domain,
+        title=mock_config_entry.title,
+        unique_id=mock_config_entry.unique_id,
+        data={**mock_config_entry.data, CONF_CREDENTIALS: imported},
+    )
+    alexa_media = MockConfigEntry(domain="alexa_media")
+    alexa_media.add_to_hass(hass)
+    issues = ir.async_get(hass)
+    issue_id = f"shared_session_{mock_config_entry.entry_id}"
+    push_sensor = "binary_sensor.test_account_real_time_updates"
+
+    await setup_integration(hass, mock_config_entry)
+    mock_push.start.assert_not_awaited()
+    coordinator = mock_config_entry.runtime_data
+    assert coordinator.push_connected is False
+    assert coordinator.update_interval == timedelta(seconds=60)
+    assert hass.states.get(push_sensor).state == STATE_OFF
+    issue = issues.async_get_issue(DOMAIN, issue_id)
+    assert issue is not None and not issue.is_fixable
+    assert issue.severity is ir.IssueSeverity.WARNING
+    assert issue.translation_key == "shared_session"
+
+    # A disabled Alexa Media Player no longer competes for the stream: the
+    # imported session gets push and the repair goes away.
+    await hass.config_entries.async_set_disabled_by(
+        alexa_media.entry_id, ConfigEntryDisabler.USER
+    )
+    await hass.config_entries.async_reload(mock_config_entry.entry_id)
+    await _settle(hass)
+    mock_push.start.assert_awaited_once()
+    assert issues.async_get_issue(DOMAIN, issue_id) is None
+    mock_push.on_state(True)
+    assert hass.states.get(push_sensor).state == STATE_ON
+
+    # The sensor reports the stream, also while the cloud is unreachable.
+    mock_client.get_devices.side_effect = AmazonEchoConnectionError("cloud down")
+    mock_push.on_state(False)
+    await _settle(hass)
+    assert hass.states.get(push_sensor).state == STATE_OFF
+
+
+async def test_own_session_gets_push_next_to_alexa_media(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """A browser sign-in has its own registration, so nothing is shared."""
+    MockConfigEntry(domain="alexa_media").add_to_hass(hass)
+    await setup_integration(hass, mock_config_entry)
+    mock_push.start.assert_awaited_once()
+    assert not ir.async_get(hass).issues

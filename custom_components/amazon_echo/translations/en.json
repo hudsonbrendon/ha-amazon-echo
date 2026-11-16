@@ -6,8 +6,8 @@
         "title": "Connect your Amazon account",
         "description": "Choose how to sign in. No password is asked or stored by Home Assistant.",
         "menu_options": {
-          "import_alexa_media": "Reuse the Alexa Media Player session",
-          "browser": "Sign in with my browser"
+          "import_alexa_media": "Reuse the Alexa Media Player session (no real-time updates while it is set up)",
+          "browser": "Sign in with Amazon in your browser"
         }
       },
       "import_alexa_media": {
@@ -38,16 +38,16 @@
         "title": "Sign in again",
         "description": "Amazon no longer accepts the stored session. Choose how to sign in again.",
         "menu_options": {
-          "import_alexa_media": "Reuse the Alexa Media Player session",
-          "browser": "Sign in with my browser"
+          "import_alexa_media": "Reuse the Alexa Media Player session (no real-time updates while it is set up)",
+          "browser": "Sign in with Amazon in your browser"
         }
       },
       "reconfigure": {
         "title": "Replace the Amazon session",
         "description": "Choose how to sign in. It must be the same Amazon account.",
         "menu_options": {
-          "import_alexa_media": "Reuse the Alexa Media Player session",
-          "browser": "Sign in with my browser"
+          "import_alexa_media": "Reuse the Alexa Media Player session (no real-time updates while it is set up)",
+          "browser": "Sign in with Amazon in your browser"
         }
       }
     },
@@ -81,7 +81,7 @@
         },
         "data_description": {
           "scan_interval": "Only a fallback while push is connected. When push is down the account is polled every 60 seconds.",
-          "enable_push": "Volume, playback, do not disturb, alarms and voice commands arrive as they happen.",
+          "enable_push": "Volume, playback, do not disturb, alarms and voice commands arrive as they happen. Not available while Alexa Media Player is set up and this account uses its imported session.",
           "enable_local": "IP address, local reachability and Spotify user, read from the device itself every 60 seconds."
         }
       }
@@ -91,6 +91,9 @@
     "binary_sensor": {
       "online": {
         "name": "Online"
+      },
+      "push_connected": {
+        "name": "Real-time updates"
       },
       "local_reachable": {
         "name": "Reachable on the local network"
@@ -254,6 +257,12 @@
     "todo": {
       "list": {
         "name": "{name}"
+      },
+      "shopping_list": {
+        "name": "Shopping list"
+      },
+      "todo_list": {
+        "name": "To-do list"
       }
     }
   },
@@ -326,13 +335,9 @@
           "name": "Time",
           "description": "Date and time of the alarm."
         },
-        "label": {
-          "name": "Label",
-          "description": "Optional name of the alarm."
-        },
         "recurrence": {
           "name": "Recurrence",
-          "description": "Optional ISO 8601 repetition, for example P1D for every day."
+          "description": "Optional repetition: DAILY, WEEKDAYS, WEEKENDS, WEEKLY or a list of days such as MO,WE,FR."
         }
       }
     },
@@ -465,6 +470,12 @@
       }
     }
   },
+  "issues": {
+    "shared_session": {
+      "title": "Real-time updates are off for {name}",
+      "description": "This account uses the session imported from Alexa Media Player. Amazon allows a single real-time connection per sign-in, so while Alexa Media Player is set up Amazon Echo checks for changes every 60 seconds instead of receiving them as they happen.\n\nTo get real-time updates, do one of these:\n\n- Open the Amazon Echo integration, choose **Reconfigure** and pick **Sign in with Amazon in your browser**. That gives this integration a sign-in of its own.\n- Or remove (or disable) Alexa Media Player and reload Amazon Echo."
+    }
+  },
   "exceptions": {
     "invalid_auth": {
       "message": "Amazon no longer accepts the stored session. Sign in again."
@@ -504,6 +515,9 @@
     },
     "item_not_found": {
       "message": "Item {item} is no longer on the list."
+    },
+    "invalid_value": {
+      "message": "Invalid value: {error}"
     }
   }
 }

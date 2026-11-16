@@ -103,5 +103,7 @@ SERVICE_BLUETOOTH_CONNECT: Final = "bluetooth_connect"
 SERVICE_BLUETOOTH_DISCONNECT: Final = "bluetooth_disconnect"
 SERVICE_CALL_FEATURE: Final = "call_feature"
 
+ISSUE_SHARED_SESSION: Final = "shared_session"
+
 SIGNAL_VOICE: Final = f"{DOMAIN}_voice"
 EVENT_VOICE_COMMAND: Final = "voice_command"

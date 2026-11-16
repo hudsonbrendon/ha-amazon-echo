@@ -50,7 +50,7 @@ def _notifications(
             for n in data.notifications
             if n.device_serial == device.serial and n.kind in kinds
         ),
-        key=lambda n: (n.when is None, n.when),
+        key=lambda n: n.when.timestamp() if n.when else float("inf"),
     )
 
 

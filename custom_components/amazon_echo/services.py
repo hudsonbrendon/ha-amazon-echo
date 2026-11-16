@@ -72,7 +72,6 @@ SCHEMAS: dict[str, vol.Schema] = {
         {
             **DEVICE,
             vol.Required(ATTR_TIME): cv.datetime,
-            vol.Optional(ATTR_LABEL): cv.string,
             vol.Optional(ATTR_RECURRENCE): cv.string,
         }
     ),
@@ -98,7 +97,7 @@ SCHEMAS: dict[str, vol.Schema] = {
         {
             **DEVICE,
             vol.Optional(ATTR_LIMIT, default=10): vol.All(
-                vol.Coerce(int), vol.Range(min=1, max=100)
+                vol.Coerce(int), vol.Range(min=1, max=50)
             ),
         }
     ),
@@ -143,8 +142,10 @@ def _resolve(
     """
     device_id: str = call.data[ATTR_DEVICE_ID]
     device_entry = dr.async_get(hass).async_get(device_id)
-    entry = device_entry and hass.config_entries.async_get_entry(
-        device_entry.config_entry_id
+    entry = (
+        hass.config_entries.async_get_entry(device_entry.config_entry_id)
+        if device_entry
+        else None
     )
     if device_entry is None or entry is None or entry.domain != DOMAIN:
         raise _error("device_not_found", device_id=device_id)
@@ -212,7 +213,6 @@ def async_setup_services(hass: HomeAssistant) -> None:
             c.client.create_alarm(
                 device,
                 _local(call.data[ATTR_TIME]),
-                label=call.data.get(ATTR_LABEL),
                 recurrence=call.data.get(ATTR_RECURRENCE),
             ),
             refresh="notifications",

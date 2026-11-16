@@ -20,8 +20,8 @@ from .entity import AmazonEchoEntity, async_add_device_entities, async_add_dynam
 
 PARALLEL_UPDATES = 0
 
-# GraphQL feature behind the Fire TV ambient mode toggle (see README).
-AMBIENT_FEATURE = "ambientMode"
+# The Fire TV ambient mode is a GraphQL toggle feature with this instance.
+AMBIENT_INSTANCE = "FTV.AmbientMode"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -122,7 +122,10 @@ SWITCHES: tuple[AmazonEchoSwitchDescription, ...] = (
         ),
         is_on_fn=lambda data, device: bool(data.endpoint(device, "ambient_mode")),
         set_fn=lambda c, device, enabled: c.client.call_feature(
-            device.endpoint_id, AMBIENT_FEATURE, "turnOn" if enabled else "turnOff"
+            device.endpoint_id or "",
+            "toggle",
+            "turnOn" if enabled else "turnOff",
+            instance=AMBIENT_INSTANCE,
         ),
         refresh="endpoints",
     ),
