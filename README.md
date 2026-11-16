@@ -347,7 +347,9 @@ that device.
   24 kHz), published under `/local/amazon_echo`, reachable through the
   external HTTPS address, and the Echo Plus recorded the request in its voice
   history. Whether it was heard was not confirmed by a person. The music sleep
-  timer (`extra.timer`) is ported from Alexa Media Player and was not sent.
+  timer (`extra.timer`) was verified live with Spotify: the music stops by
+  itself, but Amazon does not honour the exact second (25 s asked → 26 s,
+  20 s asked → about 38 s).
 - Alarm and reminder times are read by Amazon in the Echo's own time zone;
   the integration assumes it is the time zone of Home Assistant.
 - A routine button runs the routine without a target device, so routines
@@ -372,9 +374,9 @@ that device.
 - **Amazon Kids**: reading the profiles and the device state was verified;
   switching a device was not. A new child profile is noticed within three
   hours.
-- **Notifications to the Alexa app, info skills, Echo Show background image**
-  are ported from the two other integrations and were not sent during
-  development.
+- **Info skills** were verified live (the "time" skill answered on an Echo
+  Plus). **Notifications to the Alexa app** were sent once but nobody checked
+  the phone; the **Echo Show background image** was not sent.
 - Deleting voice history is not offered: the endpoint the other integrations'
   libraries have for it (`/api/activities`) no longer exists.
 - This integration uses Amazon's private app API, which can change without

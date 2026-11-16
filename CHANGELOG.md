@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.6 - 2026-11-16
+
+- The media player shows Spotify and other external players (title, artist, progress, playing/paused); they were reported as idle. Requires `python-amazon-echo` 0.3.3.
+
 ## 0.3.5 - 2026-11-16
 
 - Requires `python-amazon-echo` 0.3.2: music alarms and alarms Amazon sends without `alarmTime` now have their time, so the next-alarm sensor sees them.
