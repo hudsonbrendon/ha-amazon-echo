@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from amazon_echo import (
     AmazonEchoAuthenticationError,
@@ -122,3 +122,28 @@ async def test_stale_device_removed_and_removal_guard(
     await hass.async_block_till_done()
     assert registry.async_get_device_by_identifier((DOMAIN, FIRE_TV), ENTRY_ID) is None
     assert await async_remove_config_entry_device(hass, mock_config_entry, fire_tv)
+
+
+async def test_cancelled_setup_is_retried_after_startup(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """An entry left in error by a bootstrap timeout loads once startup is over."""
+    from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+
+    mock_config_entry.add_to_hass(hass)
+    with patch(
+        "custom_components.amazon_echo.AmazonEchoCoordinator"
+        ".async_config_entry_first_refresh",
+        side_effect=RuntimeError("cancelled by bootstrap"),
+    ):
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+    assert mock_config_entry.state is ConfigEntryState.SETUP_ERROR
+
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+    await hass.async_block_till_done()
+    assert mock_config_entry.state is ConfigEntryState.LOADED

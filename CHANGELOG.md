@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 - 2026-11-16
+
+- Slow boots: the entry no longer waits for Alexa Media Player to finish its own setup, and an entry whose setup Home Assistant cancelled at a bootstrap timeout is reloaded once startup is over.
+
 ## 0.3.0 - 2026-11-16
 
 Nothing is left in the "missing" list of [COMPARISON.md](COMPARISON.md), and

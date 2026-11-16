@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
@@ -23,6 +24,17 @@ type AmazonEchoConfigEntry = ConfigEntry[AmazonEchoCoordinator]
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Register the integration-level actions."""
     async_setup_services(hass)
+
+    @callback
+    def retry_cancelled_setup(_event: Event) -> None:
+        # When a bootstrap stage times out Home Assistant cancels every setup
+        # still running and never retries it. On a slow boot that includes
+        # this entry, so give it one more try once startup is over.
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            if entry.state is ConfigEntryState.SETUP_ERROR:
+                hass.config_entries.async_schedule_reload(entry.entry_id)
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, retry_cancelled_setup)
     return True
 
 
