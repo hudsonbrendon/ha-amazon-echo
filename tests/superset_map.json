@@ -1,0 +1,979 @@
+{
+  "amp:attribute:media_player.AlexaClient.available": {
+    "entity": "binary_sensor.online",
+    "note": "and the unavailable state of the player itself"
+  },
+  "amp:attribute:media_player.AlexaClient.bluetooth_list": {
+    "attribute": "media_player.bluetooth_list"
+  },
+  "amp:attribute:media_player.AlexaClient.connected_bluetooth": {
+    "attribute": "media_player.connected_bluetooth"
+  },
+  "amp:attribute:media_player.AlexaClient.history_records": {
+    "action": "get_voice_history",
+    "note": "the action's response, so transcripts are not written to the recorder"
+  },
+  "amp:attribute:media_player.AlexaClient.last_called": {
+    "attribute": "media_player.last_called"
+  },
+  "amp:attribute:media_player.AlexaClient.last_called_response": {
+    "attribute": "media_player.last_called_response"
+  },
+  "amp:attribute:media_player.AlexaClient.last_called_summary": {
+    "attribute": "media_player.last_called_summary"
+  },
+  "amp:attribute:media_player.AlexaClient.last_called_timestamp": {
+    "attribute": "media_player.last_called_timestamp"
+  },
+  "amp:attribute:media_player.AlexaClient.last_message": {
+    "attribute": "media_player.last_message"
+  },
+  "amp:attribute:media_player.AlexaClient.last_message_timestamp": {
+    "attribute": "media_player.last_message_timestamp"
+  },
+  "amp:attribute:media_player.AlexaClient.last_message_type": {
+    "attribute": "media_player.last_message_type"
+  },
+  "amp:attribute:media_player.AlexaClient.locale": {
+    "attribute": "media_player.locale"
+  },
+  "amp:attribute:media_player.AlexaClient.previous_volume": {
+    "attribute": "media_player.previous_volume"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.*": {
+    "attribute": "sensor.label",
+    "note": "the label of the next alarm, timer or reminder under one name"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.brief": {
+    "attribute": "sensor.items"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.dismissed": {
+    "event": "amazon_echo_alarm_dismissed"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.prior_value": {
+    "not_applicable": "Home Assistant hands every trigger the previous state (from_state); a copy of it in an attribute adds no capability."
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.process_timestamp": {
+    "not_applicable": "When the competitor's own sensor last recomputed itself; Home Assistant records last_updated for every state."
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.recurrence": {
+    "attribute": "sensor.recurrence"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.reminder_sub_label": {
+    "attribute": "sensor.sub_label"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.sorted_active": {
+    "attribute": "sensor.items",
+    "note": "each item carries its status"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.sorted_all": {
+    "attribute": "sensor.items"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.status": {
+    "attribute": "sensor.status"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.total_active": {
+    "attribute": "sensor.total_active"
+  },
+  "amp:attribute:sensor.AlexaMediaNotificationSensor.total_all": {
+    "attribute": "sensor.total_all"
+  },
+  "amp:attribute:sensor.ReminderSensor.reminder": {
+    "attribute": "sensor.label"
+  },
+  "amp:attribute:sensor.TimerSensor.timer": {
+    "attribute": "sensor.label"
+  },
+  "amp:diagnostics:config_entry": {
+    "code": "custom_components/amazon_echo/diagnostics.py::async_get_config_entry_diagnostics"
+  },
+  "amp:diagnostics:device": {
+    "code": "custom_components/amazon_echo/diagnostics.py::async_get_device_diagnostics"
+  },
+  "amp:entity:alarm_control_panel.AlexaAlarmControlPanel": {
+    "entity": "alarm_control_panel.guard"
+  },
+  "amp:entity:binary_sensor.AlexaContact": {
+    "entity": "binary_sensor.contact"
+  },
+  "amp:entity:binary_sensor.AmazonKidsSensor": {
+    "entity": "switch.amazon_kids",
+    "note": "the state of the switch"
+  },
+  "amp:entity:button.AlexaRestartButton": {
+    "entity": "button.reboot"
+  },
+  "amp:entity:light.AlexaLight": {
+    "code": "custom_components/amazon_echo/light.py::AmazonEchoLight"
+  },
+  "amp:entity:media_player.AlexaClient": {
+    "code": "custom_components/amazon_echo/media_player.py::AmazonEchoMediaPlayer"
+  },
+  "amp:entity:notify.AlexaNotificationService": {
+    "entity": "notify.speak",
+    "note": "notify entities instead of the legacy notify service"
+  },
+  "amp:entity:number.AlexaDisplayBrightness": {
+    "entity": "number.display_brightness"
+  },
+  "amp:entity:number.AlexaNotificationVolume": {
+    "entity": "number.alarm_volume"
+  },
+  "amp:entity:select.AmazonKidsChildSelect": {
+    "entity": "select.amazon_kids_profile"
+  },
+  "amp:entity:sensor.AirQualitySensor": {
+    "entity": "sensor.air_quality"
+  },
+  "amp:entity:sensor.AlarmSensor": {
+    "entity": "sensor.next_alarm"
+  },
+  "amp:entity:sensor.ReminderSensor": {
+    "entity": "sensor.next_reminder"
+  },
+  "amp:entity:sensor.TemperatureSensor": {
+    "entity": "sensor.temperature"
+  },
+  "amp:entity:sensor.TimerSensor": {
+    "entity": "sensor.next_timer"
+  },
+  "amp:entity:switch.AlexaAdaptiveBrightnessSwitch": {
+    "entity": "switch.adaptive_brightness"
+  },
+  "amp:entity:switch.AlexaDisplayPowerSwitch": {
+    "entity": "switch.display_power"
+  },
+  "amp:entity:switch.AmazonKidsSwitch": {
+    "entity": "switch.amazon_kids"
+  },
+  "amp:entity:switch.DNDSwitch": {
+    "entity": "switch.do_not_disturb"
+  },
+  "amp:entity:switch.RepeatSwitch": {
+    "media_feature": "REPEAT_SET",
+    "note": "media_player.repeat_set on the player"
+  },
+  "amp:entity:switch.ShuffleSwitch": {
+    "media_feature": "SHUFFLE_SET",
+    "note": "media_player.shuffle_set on the player"
+  },
+  "amp:entity:switch.SmartSwitch": {
+    "code": "custom_components/amazon_echo/switch.py::AmazonEchoEndpointSwitch"
+  },
+  "amp:entity_key:button.restart": {
+    "entity": "button.reboot"
+  },
+  "amp:entity_key:number.display_brightness": {
+    "entity": "number.display_brightness"
+  },
+  "amp:entity_key:number.notification_volume": {
+    "entity": "number.alarm_volume"
+  },
+  "amp:entity_key:sensor.air_quality": {
+    "entity": "sensor.air_quality"
+  },
+  "amp:entity_key:sensor.air_quality_carbon_monoxide": {
+    "entity": "sensor.co"
+  },
+  "amp:entity_key:sensor.air_quality_humidity": {
+    "entity": "sensor.humidity"
+  },
+  "amp:entity_key:sensor.air_quality_indoor_air_quality": {
+    "entity": "sensor.air_quality"
+  },
+  "amp:entity_key:sensor.air_quality_particulate_matter": {
+    "entity": "sensor.pm25"
+  },
+  "amp:entity_key:sensor.air_quality_volatile_organic_compounds": {
+    "entity": "sensor.voc"
+  },
+  "amp:entity_key:sensor.next_alarm": {
+    "entity": "sensor.next_alarm"
+  },
+  "amp:entity_key:sensor.next_reminder": {
+    "entity": "sensor.next_reminder"
+  },
+  "amp:entity_key:sensor.next_timer": {
+    "entity": "sensor.next_timer"
+  },
+  "amp:entity_key:sensor.temperature": {
+    "entity": "sensor.temperature"
+  },
+  "amp:entity_key:switch.adaptive_brightness": {
+    "entity": "switch.adaptive_brightness"
+  },
+  "amp:entity_key:switch.display_power": {
+    "entity": "switch.display_power"
+  },
+  "amp:entity_key:switch.do_not_disturb": {
+    "entity": "switch.do_not_disturb"
+  },
+  "amp:entity_key:switch.repeat": {
+    "media_feature": "REPEAT_SET",
+    "note": "media_player.repeat_set on the player"
+  },
+  "amp:entity_key:switch.shuffle": {
+    "media_feature": "SHUFFLE_SET",
+    "note": "media_player.shuffle_set on the player"
+  },
+  "amp:event:alexa_media_alarm_dismissal_event": {
+    "event": "amazon_echo_alarm_dismissed"
+  },
+  "amp:event:alexa_media_last_called_event": {
+    "event": "amazon_echo_last_called"
+  },
+  "amp:event:alexa_media_notification_event": {
+    "event": "amazon_echo_notification"
+  },
+  "amp:event:alexa_media_relogin_required": {
+    "code": "custom_components/amazon_echo/coordinator.py::async_start_reauth",
+    "note": "a rejected session starts Home Assistant's own reauthentication, with its notification and repair"
+  },
+  "amp:event:alexa_media_relogin_success": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_reauth",
+    "note": "the reauthentication flow ends and the entry reloads"
+  },
+  "amp:event:alexa_media_voice_command": {
+    "event": "amazon_echo_voice_command"
+  },
+  "amp:feature:AlarmControlPanelEntityFeature.ARM_AWAY": {
+    "entity_feature": "AlarmControlPanelEntityFeature.ARM_AWAY"
+  },
+  "amp:feature:ColorMode.BRIGHTNESS": {
+    "entity_feature": "ColorMode.BRIGHTNESS"
+  },
+  "amp:feature:ColorMode.COLOR_TEMP": {
+    "entity_feature": "ColorMode.COLOR_TEMP"
+  },
+  "amp:feature:ColorMode.HS": {
+    "entity_feature": "ColorMode.HS"
+  },
+  "amp:feature:ColorMode.ONOFF": {
+    "entity_feature": "ColorMode.ONOFF"
+  },
+  "amp:feature:MediaPlayerEntityFeature.NEXT_TRACK": {
+    "media_feature": "NEXT_TRACK"
+  },
+  "amp:feature:MediaPlayerEntityFeature.PAUSE": {
+    "media_feature": "PAUSE"
+  },
+  "amp:feature:MediaPlayerEntityFeature.PLAY": {
+    "media_feature": "PLAY"
+  },
+  "amp:feature:MediaPlayerEntityFeature.PLAY_MEDIA": {
+    "media_feature": "PLAY_MEDIA"
+  },
+  "amp:feature:MediaPlayerEntityFeature.PREVIOUS_TRACK": {
+    "media_feature": "PREVIOUS_TRACK"
+  },
+  "amp:feature:MediaPlayerEntityFeature.REPEAT_SET": {
+    "media_feature": "REPEAT_SET"
+  },
+  "amp:feature:MediaPlayerEntityFeature.SEEK": {
+    "media_feature": "SEEK"
+  },
+  "amp:feature:MediaPlayerEntityFeature.SELECT_SOURCE": {
+    "media_feature": "SELECT_SOURCE"
+  },
+  "amp:feature:MediaPlayerEntityFeature.SHUFFLE_SET": {
+    "media_feature": "SHUFFLE_SET"
+  },
+  "amp:feature:MediaPlayerEntityFeature.STOP": {
+    "media_feature": "STOP"
+  },
+  "amp:feature:MediaPlayerEntityFeature.TURN_OFF": {
+    "media_feature": "TURN_OFF"
+  },
+  "amp:feature:MediaPlayerEntityFeature.TURN_ON": {
+    "media_feature": "TURN_ON"
+  },
+  "amp:feature:MediaPlayerEntityFeature.VOLUME_MUTE": {
+    "media_feature": "VOLUME_MUTE"
+  },
+  "amp:feature:MediaPlayerEntityFeature.VOLUME_SET": {
+    "media_feature": "VOLUME_SET"
+  },
+  "amp:flow:import": {
+    "not_applicable": "Setup from configuration.yaml, which Alexa Media Player itself reports as deprecated (its issue deprecated_yaml_configuration)."
+  },
+  "amp:flow:options": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_get_options_flow"
+  },
+  "amp:flow:reauth": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_reauth"
+  },
+  "amp:flow:user": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_user"
+  },
+  "amp:notify_data:method": {
+    "action": "send_announcement",
+    "field": "method"
+  },
+  "amp:notify_data:type": {
+    "entity": "notify.announce",
+    "note": "one entity or action per type instead of a data key"
+  },
+  "amp:notify_target:last_called": {
+    "entity": "notify.speak_last_called"
+  },
+  "amp:notify_type:announce": {
+    "entity": "notify.announce",
+    "note": "amazon_echo.send_announcement for several devices"
+  },
+  "amp:notify_type:dropin_notification": {
+    "action": "send_drop_in_notification"
+  },
+  "amp:notify_type:push": {
+    "action": "send_mobile_push"
+  },
+  "amp:notify_type:tts": {
+    "entity": "notify.speak"
+  },
+  "amp:option:debug": {
+    "not_applicable": "A debug-logging toggle; Home Assistant enables debug logging for any integration from its menu."
+  },
+  "amp:option:email": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_browser",
+    "note": "the sign-in is done in the user's browser, with whatever Amazon asks there"
+  },
+  "amp:option:exclude_devices": {
+    "code": "custom_components/amazon_echo/entity.py::device_info",
+    "note": "every device is in the device registry, where Home Assistant disables it from its page"
+  },
+  "amp:option:extended_entity_discovery": {
+    "option": "smart_home"
+  },
+  "amp:option:hass_url": {
+    "not_applicable": "The address of Home Assistant for the competitor's own login proxy; amazon_echo has no proxy to point anywhere."
+  },
+  "amp:option:include_devices": {
+    "code": "custom_components/amazon_echo/entity.py::device_info",
+    "note": "every device is in the device registry, where Home Assistant disables the others from their pages"
+  },
+  "amp:option:otp_secret": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_browser",
+    "note": "the sign-in is done in the user's browser, with whatever Amazon asks there"
+  },
+  "amp:option:password": {
+    "not_applicable": "Stores the Amazon password in Home Assistant; amazon_echo keeps only the device registration it gets from the sign-in."
+  },
+  "amp:option:proxy_warning": {
+    "not_applicable": "Acknowledges that the competitor's login proxy cannot reach Home Assistant; there is no proxy in amazon_echo."
+  },
+  "amp:option:public_url": {
+    "option": "public_url"
+  },
+  "amp:option:queue_delay": {
+    "not_applicable": "Tunes how long the competitor waits to batch commands; amazon_echo sends each command in a request of its own."
+  },
+  "amp:option:registered": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_browser",
+    "note": "the sign-in is done in the user's browser, with whatever Amazon asks there"
+  },
+  "amp:option:scan_interval": {
+    "option": "scan_interval"
+  },
+  "amp:option:securitycode": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_browser",
+    "note": "the sign-in is done in the user's browser, with whatever Amazon asks there"
+  },
+  "amp:option:should_get_network": {
+    "option": "smart_home",
+    "note": "whether the smart-home devices of the account are read"
+  },
+  "amp:option:url": {
+    "code": "custom_components/amazon_echo/config_flow.py::register_device",
+    "note": "the Amazon domain comes from the address of the sign-in"
+  },
+  "amp:option:use_reported_domain": {
+    "code": "custom_components/amazon_echo/config_flow.py::register_device",
+    "note": "the Amazon domain comes from the address of the sign-in"
+  },
+  "amp:platform:alarm_control_panel": {
+    "code": "custom_components/amazon_echo/alarm_control_panel.py::async_setup_entry"
+  },
+  "amp:platform:binary_sensor": {
+    "code": "custom_components/amazon_echo/binary_sensor.py::async_setup_entry"
+  },
+  "amp:platform:button": {
+    "code": "custom_components/amazon_echo/button.py::async_setup_entry"
+  },
+  "amp:platform:light": {
+    "code": "custom_components/amazon_echo/light.py::async_setup_entry"
+  },
+  "amp:platform:media_player": {
+    "code": "custom_components/amazon_echo/media_player.py::async_setup_entry"
+  },
+  "amp:platform:notify": {
+    "code": "custom_components/amazon_echo/notify.py::async_setup_entry"
+  },
+  "amp:platform:number": {
+    "code": "custom_components/amazon_echo/number.py::async_setup_entry"
+  },
+  "amp:platform:select": {
+    "code": "custom_components/amazon_echo/select.py::async_setup_entry"
+  },
+  "amp:platform:sensor": {
+    "code": "custom_components/amazon_echo/sensor.py::async_setup_entry"
+  },
+  "amp:platform:switch": {
+    "code": "custom_components/amazon_echo/switch.py::async_setup_entry"
+  },
+  "amp:play_media:*": {
+    "code": "custom_components/amazon_echo/media_player.py::music_providers",
+    "note": "a music provider id as the media type"
+  },
+  "amp:play_media:custom": {
+    "play_media_type": "text_command"
+  },
+  "amp:play_media:image": {
+    "play_media_type": "image"
+  },
+  "amp:play_media:music": {
+    "code": "custom_components/amazon_echo/media_player.py::async_audio_ssml",
+    "note": "an audio file played as an announcement"
+  },
+  "amp:play_media:routine": {
+    "play_media_type": "routine"
+  },
+  "amp:play_media:sequence": {
+    "play_media_type": "sequence"
+  },
+  "amp:play_media:skill": {
+    "play_media_type": "skill"
+  },
+  "amp:play_media:sound": {
+    "play_media_type": "sound"
+  },
+  "amp:play_media_option:announce": {
+    "code": "custom_components/amazon_echo/media_player.py::ATTR_MEDIA_ANNOUNCE"
+  },
+  "amp:play_media_option:extra.timer": {
+    "code": "custom_components/amazon_echo/media_player.py::_timer"
+  },
+  "amp:push:NotifyMediaSessionsUpdated": {
+    "push": "NotifyMediaSessionsUpdated"
+  },
+  "amp:push:NotifyNowPlayingUpdated": {
+    "push": "NotifyNowPlayingUpdated"
+  },
+  "amp:push:PUSH_AUDIO_PLAYER_STATE": {
+    "push": "PUSH_AUDIO_PLAYER_STATE"
+  },
+  "amp:push:PUSH_BLUETOOTH_STATE_CHANGE": {
+    "push": "PUSH_BLUETOOTH_STATE_CHANGE"
+  },
+  "amp:push:PUSH_DOPPLER_CONNECTION_CHANGE": {
+    "push": "PUSH_DOPPLER_CONNECTION_CHANGE"
+  },
+  "amp:push:PUSH_EQUALIZER_STATE_CHANGE": {
+    "push": "PUSH_EQUALIZER_STATE_CHANGE"
+  },
+  "amp:push:PUSH_MEDIA_CHANGE": {
+    "push": "PUSH_MEDIA_CHANGE"
+  },
+  "amp:push:PUSH_MEDIA_PROGRESS_CHANGE": {
+    "push": "PUSH_MEDIA_PROGRESS_CHANGE"
+  },
+  "amp:push:PUSH_MEDIA_QUEUE_CHANGE": {
+    "push": "PUSH_MEDIA_QUEUE_CHANGE"
+  },
+  "amp:push:PUSH_NOTIFICATION_CHANGE": {
+    "push": "PUSH_NOTIFICATION_CHANGE"
+  },
+  "amp:push:PUSH_VOLUME_CHANGE": {
+    "push": "PUSH_VOLUME_CHANGE"
+  },
+  "amp:sensor_type:Alexa.AirQuality.CarbonMonoxide": {
+    "entity": "sensor.co"
+  },
+  "amp:sensor_type:Alexa.AirQuality.Humidity": {
+    "entity": "sensor.humidity"
+  },
+  "amp:sensor_type:Alexa.AirQuality.IndoorAirQuality": {
+    "entity": "sensor.air_quality"
+  },
+  "amp:sensor_type:Alexa.AirQuality.ParticulateMatter": {
+    "entity": "sensor.pm25"
+  },
+  "amp:sensor_type:Alexa.AirQuality.ParticulateMatterPM10": {
+    "entity": "sensor.pm10"
+  },
+  "amp:sensor_type:Alexa.AirQuality.VolatileOrganicCompounds": {
+    "entity": "sensor.voc"
+  },
+  "amp:service:amazon_kids_disable": {
+    "entity": "switch.amazon_kids",
+    "note": "switch.turn_off"
+  },
+  "amp:service:amazon_kids_enable": {
+    "entity": "select.amazon_kids_profile",
+    "note": "select.select_option"
+  },
+  "amp:service:create_alarm": {
+    "action": "create_alarm"
+  },
+  "amp:service:delete_alarm": {
+    "action": "delete_notification"
+  },
+  "amp:service:disable_alarm": {
+    "action": "disable_alarm"
+  },
+  "amp:service:enable_alarm": {
+    "action": "enable_alarm"
+  },
+  "amp:service:enable_network_discovery": {
+    "code": "custom_components/amazon_echo/coordinator.py::get_smart_home_endpoints",
+    "note": "read on every poll, there is nothing to re-arm"
+  },
+  "amp:service:force_logout": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_reconfigure",
+    "note": "Reconfigure replaces the session at any time"
+  },
+  "amp:service:get_history_records": {
+    "action": "get_voice_history"
+  },
+  "amp:service:list_alarms": {
+    "action": "get_notifications"
+  },
+  "amp:service:repeat_last_message": {
+    "action": "repeat_last_message"
+  },
+  "amp:service:restore_volume": {
+    "action": "restore_volume"
+  },
+  "amp:service:skip_next_alarm": {
+    "action": "skip_next_alarm"
+  },
+  "amp:service:update_last_called": {
+    "action": "update_last_called"
+  },
+  "amp:service_field:amazon_kids_disable.entity_id": {
+    "entity": "switch.amazon_kids",
+    "note": "one switch per device"
+  },
+  "amp:service_field:amazon_kids_enable.child": {
+    "entity": "select.amazon_kids_profile",
+    "note": "the options of the select"
+  },
+  "amp:service_field:amazon_kids_enable.entity_id": {
+    "entity": "select.amazon_kids_profile",
+    "note": "one select per device"
+  },
+  "amp:service_field:create_alarm.alarm_type": {
+    "action": "create_alarm",
+    "field": "alarm_type"
+  },
+  "amp:service_field:create_alarm.days": {
+    "action": "create_alarm",
+    "field": "recurrence",
+    "note": "today / tomorrow are the date of the time field"
+  },
+  "amp:service_field:create_alarm.entity_id": {
+    "action": "create_alarm",
+    "field": "device_id"
+  },
+  "amp:service_field:create_alarm.music_entity": {
+    "action": "create_alarm",
+    "field": "music_entity"
+  },
+  "amp:service_field:create_alarm.music_provider": {
+    "action": "create_alarm",
+    "field": "music_provider"
+  },
+  "amp:service_field:create_alarm.time": {
+    "action": "create_alarm",
+    "field": "time"
+  },
+  "amp:service_field:delete_alarm.alarm_id": {
+    "action": "delete_notification",
+    "field": "notification_id"
+  },
+  "amp:service_field:delete_alarm.entity_id": {
+    "action": "delete_notification",
+    "field": "device_id"
+  },
+  "amp:service_field:disable_alarm.alarm_id": {
+    "action": "disable_alarm",
+    "field": "notification_id"
+  },
+  "amp:service_field:disable_alarm.entity_id": {
+    "action": "disable_alarm",
+    "field": "device_id"
+  },
+  "amp:service_field:enable_alarm.alarm_id": {
+    "action": "enable_alarm",
+    "field": "notification_id"
+  },
+  "amp:service_field:enable_alarm.entity_id": {
+    "action": "enable_alarm",
+    "field": "device_id"
+  },
+  "amp:service_field:enable_network_discovery.email": {
+    "code": "custom_components/amazon_echo/coordinator.py::get_smart_home_endpoints",
+    "note": "every account reads its own endpoints on every poll"
+  },
+  "amp:service_field:force_logout.email": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_reconfigure",
+    "note": "Reconfigure is started from the entry of the account"
+  },
+  "amp:service_field:get_history_records.entity_id": {
+    "action": "get_voice_history",
+    "field": "device_id"
+  },
+  "amp:service_field:get_history_records.entries": {
+    "action": "get_voice_history",
+    "field": "limit"
+  },
+  "amp:service_field:list_alarms.entity_id": {
+    "action": "get_notifications",
+    "field": "device_id"
+  },
+  "amp:service_field:repeat_last_message.entity_id": {
+    "action": "repeat_last_message",
+    "field": "device_id"
+  },
+  "amp:service_field:restore_volume.entity_id": {
+    "action": "restore_volume",
+    "field": "device_id"
+  },
+  "amp:service_field:skip_next_alarm.alarm_id": {
+    "action": "skip_next_alarm",
+    "field": "notification_id"
+  },
+  "amp:service_field:skip_next_alarm.entity_id": {
+    "action": "skip_next_alarm",
+    "field": "device_id"
+  },
+  "amp:service_field:update_last_called.email": {
+    "action": "update_last_called",
+    "field": "device_id",
+    "note": "the account device, or any device of the account"
+  },
+  "core:diagnostics:config_entry": {
+    "code": "custom_components/amazon_echo/diagnostics.py::async_get_config_entry_diagnostics"
+  },
+  "core:diagnostics:device": {
+    "code": "custom_components/amazon_echo/diagnostics.py::async_get_device_diagnostics"
+  },
+  "core:entity:binary_sensor.babyCryDetectionState": {
+    "removed": "core binary_sensor.py: DEPRECATED_BINARY_SENSORS, deleted from the registry at setup"
+  },
+  "core:entity:binary_sensor.beepingApplianceDetectionState": {
+    "removed": "core binary_sensor.py: DEPRECATED_BINARY_SENSORS, deleted from the registry at setup"
+  },
+  "core:entity:binary_sensor.bluetooth": {
+    "removed": "core binary_sensor.py: DEPRECATED_BINARY_SENSORS, deleted from the registry at setup"
+  },
+  "core:entity:binary_sensor.coughDetectionState": {
+    "removed": "core binary_sensor.py: DEPRECATED_BINARY_SENSORS, deleted from the registry at setup"
+  },
+  "core:entity:binary_sensor.detectionState": {
+    "entity": "binary_sensor.motion"
+  },
+  "core:entity:binary_sensor.dogBarkDetectionState": {
+    "removed": "core binary_sensor.py: DEPRECATED_BINARY_SENSORS, deleted from the registry at setup"
+  },
+  "core:entity:binary_sensor.online": {
+    "entity": "binary_sensor.online"
+  },
+  "core:entity:binary_sensor.waterSoundsDetectionState": {
+    "removed": "core binary_sensor.py: DEPRECATED_BINARY_SENSORS, deleted from the registry at setup"
+  },
+  "core:entity:button.*": {
+    "entity": "button.routine",
+    "note": "one button per routine"
+  },
+  "core:entity:button.restart": {
+    "entity": "button.reboot"
+  },
+  "core:entity:event.voice_event": {
+    "entity": "event.voice"
+  },
+  "core:entity:light.light": {
+    "code": "custom_components/amazon_echo/light.py::AmazonEchoLight"
+  },
+  "core:entity:media_player.media": {
+    "code": "custom_components/amazon_echo/media_player.py::AmazonEchoMediaPlayer"
+  },
+  "core:entity:notify.announce": {
+    "entity": "notify.announce"
+  },
+  "core:entity:notify.speak": {
+    "entity": "notify.speak"
+  },
+  "core:entity:select.default_device": {
+    "entity": "select.default_device"
+  },
+  "core:entity:select.dropin": {
+    "entity": "select.drop_in"
+  },
+  "core:entity:sensor.Air Quality": {
+    "entity": "sensor.air_quality"
+  },
+  "core:entity:sensor.Alarm": {
+    "entity": "sensor.next_alarm"
+  },
+  "core:entity:sensor.CO": {
+    "entity": "sensor.co"
+  },
+  "core:entity:sensor.Humidity": {
+    "entity": "sensor.humidity"
+  },
+  "core:entity:sensor.PM10": {
+    "entity": "sensor.pm10"
+  },
+  "core:entity:sensor.PM25": {
+    "entity": "sensor.pm25"
+  },
+  "core:entity:sensor.Reminder": {
+    "entity": "sensor.next_reminder"
+  },
+  "core:entity:sensor.Timer": {
+    "entity": "sensor.next_timer"
+  },
+  "core:entity:sensor.VOC": {
+    "entity": "sensor.voc"
+  },
+  "core:entity:sensor.illuminance": {
+    "entity": "sensor.illuminance"
+  },
+  "core:entity:sensor.temperature": {
+    "entity": "sensor.temperature"
+  },
+  "core:entity:switch.announcements": {
+    "entity": "switch.announcements"
+  },
+  "core:entity:switch.aqm_led": {
+    "entity": "switch.aqm_led"
+  },
+  "core:entity:switch.communications": {
+    "entity": "switch.communications"
+  },
+  "core:entity:switch.dnd": {
+    "entity": "switch.do_not_disturb"
+  },
+  "core:entity:todo.*": {
+    "entity": "todo.list",
+    "note": "one entity per custom list"
+  },
+  "core:entity:todo.*2": {
+    "entity": "todo.shopping_list",
+    "note": "and todo.todo_list: the two built-in lists"
+  },
+  "core:entity_key:event.voice_event": {
+    "entity": "event.voice"
+  },
+  "core:entity_key:notify.announce": {
+    "entity": "notify.announce"
+  },
+  "core:entity_key:notify.speak": {
+    "entity": "notify.speak"
+  },
+  "core:entity_key:select.default_device": {
+    "entity": "select.default_device"
+  },
+  "core:entity_key:select.dropin": {
+    "entity": "select.drop_in"
+  },
+  "core:entity_key:sensor.alarm": {
+    "entity": "sensor.next_alarm"
+  },
+  "core:entity_key:sensor.reminder": {
+    "entity": "sensor.next_reminder"
+  },
+  "core:entity_key:sensor.timer": {
+    "entity": "sensor.next_timer"
+  },
+  "core:entity_key:sensor.voc_index": {
+    "entity": "sensor.voc"
+  },
+  "core:entity_key:switch.announcements": {
+    "entity": "switch.announcements"
+  },
+  "core:entity_key:switch.aqm_led": {
+    "entity": "switch.aqm_led"
+  },
+  "core:entity_key:switch.communications": {
+    "entity": "switch.communications"
+  },
+  "core:entity_key:switch.do_not_disturb": {
+    "entity": "switch.do_not_disturb"
+  },
+  "core:entity_key:todo.shop": {
+    "entity": "todo.shopping_list"
+  },
+  "core:entity_key:todo.todo": {
+    "entity": "todo.todo_list"
+  },
+  "core:event_attribute:intent": {
+    "attribute": "event.intent"
+  },
+  "core:event_attribute:person_first_name": {
+    "attribute": "event.person"
+  },
+  "core:event_attribute:person_type": {
+    "attribute": "event.person_type"
+  },
+  "core:event_attribute:voice_command": {
+    "attribute": "event.utterance"
+  },
+  "core:event_attribute:voice_reply": {
+    "attribute": "event.response"
+  },
+  "core:event_type:triggered": {
+    "code": "custom_components/amazon_echo/event.py::EVENT_VOICE_COMMAND",
+    "note": "the event type is called voice_command"
+  },
+  "core:feature:ColorMode.HS": {
+    "entity_feature": "ColorMode.HS"
+  },
+  "core:feature:LightEntityFeature.EFFECT": {
+    "entity_feature": "LightEntityFeature.EFFECT"
+  },
+  "core:feature:MediaPlayerEntityFeature.NEXT_TRACK": {
+    "media_feature": "NEXT_TRACK"
+  },
+  "core:feature:MediaPlayerEntityFeature.PAUSE": {
+    "media_feature": "PAUSE"
+  },
+  "core:feature:MediaPlayerEntityFeature.PLAY": {
+    "media_feature": "PLAY"
+  },
+  "core:feature:MediaPlayerEntityFeature.PLAY_MEDIA": {
+    "media_feature": "PLAY_MEDIA"
+  },
+  "core:feature:MediaPlayerEntityFeature.PREVIOUS_TRACK": {
+    "media_feature": "PREVIOUS_TRACK"
+  },
+  "core:feature:MediaPlayerEntityFeature.STOP": {
+    "media_feature": "STOP"
+  },
+  "core:feature:MediaPlayerEntityFeature.VOLUME_MUTE": {
+    "media_feature": "VOLUME_MUTE"
+  },
+  "core:feature:MediaPlayerEntityFeature.VOLUME_SET": {
+    "media_feature": "VOLUME_SET"
+  },
+  "core:feature:MediaPlayerEntityFeature.VOLUME_STEP": {
+    "media_feature": "VOLUME_STEP"
+  },
+  "core:feature:NotifyEntityFeature.TITLE": {
+    "entity_feature": "NotifyEntityFeature.TITLE"
+  },
+  "core:feature:TodoListEntityFeature.CREATE_TODO_ITEM": {
+    "entity_feature": "TodoListEntityFeature.CREATE_TODO_ITEM"
+  },
+  "core:feature:TodoListEntityFeature.DELETE_TODO_ITEM": {
+    "entity_feature": "TodoListEntityFeature.DELETE_TODO_ITEM"
+  },
+  "core:feature:TodoListEntityFeature.UPDATE_TODO_ITEM": {
+    "entity_feature": "TodoListEntityFeature.UPDATE_TODO_ITEM"
+  },
+  "core:flow:reauth": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_reauth"
+  },
+  "core:flow:reconfigure": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_reconfigure"
+  },
+  "core:flow:user": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_user"
+  },
+  "core:option:code": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_browser",
+    "note": "the sign-in is done in the user's browser, with whatever Amazon asks there"
+  },
+  "core:option:password": {
+    "not_applicable": "Stores the Amazon password in Home Assistant; amazon_echo keeps only the device registration it gets from the sign-in."
+  },
+  "core:option:username": {
+    "code": "custom_components/amazon_echo/config_flow.py::async_step_browser",
+    "note": "the sign-in is done in the user's browser, with whatever Amazon asks there"
+  },
+  "core:platform:binary_sensor": {
+    "code": "custom_components/amazon_echo/binary_sensor.py::async_setup_entry"
+  },
+  "core:platform:button": {
+    "code": "custom_components/amazon_echo/button.py::async_setup_entry"
+  },
+  "core:platform:event": {
+    "code": "custom_components/amazon_echo/event.py::async_setup_entry"
+  },
+  "core:platform:light": {
+    "code": "custom_components/amazon_echo/light.py::async_setup_entry"
+  },
+  "core:platform:media_player": {
+    "code": "custom_components/amazon_echo/media_player.py::async_setup_entry"
+  },
+  "core:platform:notify": {
+    "code": "custom_components/amazon_echo/notify.py::async_setup_entry"
+  },
+  "core:platform:select": {
+    "code": "custom_components/amazon_echo/select.py::async_setup_entry"
+  },
+  "core:platform:sensor": {
+    "code": "custom_components/amazon_echo/sensor.py::async_setup_entry"
+  },
+  "core:platform:switch": {
+    "code": "custom_components/amazon_echo/switch.py::async_setup_entry"
+  },
+  "core:platform:todo": {
+    "code": "custom_components/amazon_echo/todo.py::async_setup_entry"
+  },
+  "core:play_media:*": {
+    "code": "custom_components/amazon_echo/media_player.py::music_providers",
+    "note": "a music provider id as the media type"
+  },
+  "core:push:FDAL_UPDATE": {
+    "push": "EventBus:AlexaMobile::FDAL",
+    "note": "the name Amazon sends; FDAL_UPDATE is the library's own"
+  },
+  "core:push:PUSH_AUDIO_PLAYER_STATE": {
+    "push": "PUSH_AUDIO_PLAYER_STATE"
+  },
+  "core:push:PUSH_DND_STATE_CHANGE": {
+    "push": "PUSH_DND_STATE_CHANGE"
+  },
+  "core:push:PUSH_EQUALIZER_STATE_CHANGE": {
+    "push": "PUSH_EQUALIZER_STATE_CHANGE"
+  },
+  "core:push:PUSH_LIST_ITEM_CHANGE": {
+    "push": "PUSH_LIST_ITEM_CHANGE"
+  },
+  "core:push:PUSH_VOLUME_CHANGE": {
+    "push": "PUSH_VOLUME_CHANGE"
+  },
+  "core:service:send_info_skill": {
+    "action": "send_info_skill"
+  },
+  "core:service:send_sound": {
+    "action": "play_sound"
+  },
+  "core:service:send_text_command": {
+    "action": "send_text_command"
+  },
+  "core:service_field:send_info_skill.device_id": {
+    "action": "send_info_skill",
+    "field": "device_id"
+  },
+  "core:service_field:send_info_skill.info_skill": {
+    "action": "send_info_skill",
+    "field": "skill"
+  },
+  "core:service_field:send_sound.device_id": {
+    "action": "play_sound",
+    "field": "device_id"
+  },
+  "core:service_field:send_sound.sound": {
+    "action": "play_sound",
+    "field": "sound"
+  },
+  "core:service_field:send_text_command.device_id": {
+    "action": "send_text_command",
+    "field": "device_id"
+  },
+  "core:service_field:send_text_command.text_command": {
+    "action": "send_text_command",
+    "field": "text"
+  }
+}

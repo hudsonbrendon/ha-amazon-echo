@@ -6,6 +6,8 @@ from datetime import datetime
 from typing import Any
 
 from homeassistant.components.media_player import (
+    ATTR_MEDIA_ANNOUNCE,
+    ATTR_MEDIA_EXTRA,
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityDescription,
@@ -21,6 +23,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from amazon_echo import BluetoothDevice, Device, MediaState
 
 from . import AmazonEchoConfigEntry
+from .audio import async_audio_ssml, is_audio_source
 from .const import (
     CAP_AUDIO_PLAYER,
     DEFAULT_MUSIC_PROVIDER,
@@ -53,11 +56,20 @@ BASE_FEATURES = (
     | MediaPlayerEntityFeature.SHUFFLE_SET
     | MediaPlayerEntityFeature.REPEAT_SET
     | MediaPlayerEntityFeature.PLAY_MEDIA
+    | MediaPlayerEntityFeature.MEDIA_ANNOUNCE
     | MediaPlayerEntityFeature.TURN_ON
     | MediaPlayerEntityFeature.TURN_OFF
 )
 STATES = {"playing": MediaPlayerState.PLAYING, "paused": MediaPlayerState.PAUSED}
 UNMUTE_FALLBACK_VOLUME = 30
+
+
+def _timer(kwargs: dict[str, Any]) -> int | None:
+    """Seconds after which music stops: ``extra: {timer: 600}`` of play_media."""
+    try:
+        return int((kwargs.get(ATTR_MEDIA_EXTRA) or {})["timer"])
+    except KeyError, TypeError, ValueError:
+        return None
 
 
 def is_player(device: Device) -> bool:
@@ -222,6 +234,7 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
             "last_called_response": last.response if last else None,
             "last_message": message[1] if message else None,
             "last_message_type": message[0] if message else None,
+            "last_message_timestamp": message[3] if message else None,
             "bluetooth_list": [p.name or p.address for p in self._paired],
             "connected_bluetooth": next(
                 (p.name or p.address for p in self._paired if p.connected), None
@@ -331,12 +344,7 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
     ) -> None:
         """Play music, run a routine, play a sound, open a skill, or talk."""
         client, device = self.coordinator.client, self.device
-        if media_type == MediaType.MUSIC:
-            provider, _, phrase = media_id.partition(":")
-            if not phrase or provider not in self.data.music_providers:
-                provider, phrase = DEFAULT_MUSIC_PROVIDER, media_id
-            action = client.play_music(device, provider, phrase)
-        elif media_type == MEDIA_TYPE_ROUTINE:
+        if media_type == MEDIA_TYPE_ROUTINE:
             action = client.run_routine(self.coordinator.routine(media_id), device)
         elif media_type == MEDIA_TYPE_SOUND:
             action = client.play_sound(device, media_id)
@@ -347,9 +355,31 @@ class AmazonEchoMediaPlayer(AmazonEchoEntity, MediaPlayerEntity):
         elif media_type == MEDIA_TYPE_TTS:
             action = client.speak(device, media_id)
         elif media_type == MEDIA_TYPE_SEQUENCE:
-            action = client.send_sequence(device, media_id, kwargs.get("extra"))
+            action = client.send_sequence(
+                device, media_id, kwargs.get(ATTR_MEDIA_EXTRA)
+            )
         elif media_type == MEDIA_TYPE_IMAGE:
             action = client.set_background_image(device, media_id)
+        elif is_audio_source(media_id):
+            # A file (URL, local media, text-to-speech): Alexa cannot stream
+            # it, only play it as a short announcement.
+            if not kwargs.get(ATTR_MEDIA_ANNOUNCE):
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN, translation_key="announce_required"
+                )
+            ssml = await async_audio_ssml(
+                self.hass, self.coordinator.config_entry, media_id, self.entity_id
+            )
+            await self.coordinator.async_say("speak", [device], ssml)
+            return
+        elif media_type == MediaType.MUSIC or media_type in self.data.music_providers:
+            # "music" with "PROVIDER:phrase", or the provider as the type
+            provider, _, phrase = media_id.partition(":")
+            if media_type != MediaType.MUSIC:
+                provider, phrase = str(media_type), media_id
+            elif not phrase or provider not in self.data.music_providers:
+                provider, phrase = DEFAULT_MUSIC_PROVIDER, media_id
+            action = client.play_music(device, provider, phrase, timer=_timer(kwargs))
         else:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,

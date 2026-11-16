@@ -30,6 +30,7 @@ from custom_components.amazon_echo.const import (
     CONF_ENABLE_PUSH,
     CONF_ENTRY,
     CONF_HOSTS,
+    CONF_PUBLIC_URL,
     CONF_SCAN_INTERVAL,
     CONF_SMART_HOME,
     DOMAIN,
@@ -462,3 +463,28 @@ async def test_options_flow(
     coordinator = mock_config_entry.runtime_data
     assert coordinator.update_interval.total_seconds() == 120
     assert mock_push.start.await_count == 1  # only the first load started it
+
+
+async def test_options_flow_public_url(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """Alexa only fetches audio over HTTPS, so nothing else is accepted."""
+    await setup_integration(hass, mock_config_entry)
+    result = await hass.config_entries.options.async_init(mock_config_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_SCAN_INTERVAL: 300, CONF_PUBLIC_URL: "http://ha.example.com"},
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_PUBLIC_URL: "not_https"}
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_SCAN_INTERVAL: 300, CONF_PUBLIC_URL: "https://ha.example.com"},
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert mock_config_entry.options[CONF_PUBLIC_URL] == "https://ha.example.com"

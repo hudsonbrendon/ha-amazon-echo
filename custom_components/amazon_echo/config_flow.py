@@ -56,6 +56,7 @@ from .const import (
     CONF_ENABLE_PUSH,
     CONF_ENTRY,
     CONF_HOSTS,
+    CONF_PUBLIC_URL,
     CONF_SCAN_INTERVAL,
     CONF_SMART_HOME,
     DEFAULT_SCAN_INTERVAL,
@@ -87,6 +88,9 @@ OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(CONF_ENABLE_PUSH, default=True): BooleanSelector(),
         vol.Optional(CONF_ENABLE_LOCAL, default=True): BooleanSelector(),
         vol.Optional(CONF_SMART_HOME, default=False): BooleanSelector(),
+        vol.Optional(CONF_PUBLIC_URL): TextSelector(
+            TextSelectorConfig(type=TextSelectorType.URL)
+        ),
     }
 )
 
@@ -334,18 +338,23 @@ class AmazonEchoConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class AmazonEchoOptionsFlow(OptionsFlowWithReload):
-    """Polling interval, push channel, LAN probing and smart-home devices."""
+    """Polling, push channel, LAN probing, smart-home devices and public URL."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Show/save the options."""
+        errors: dict[str, str] = {}
         if user_input is not None:
             user_input[CONF_SCAN_INTERVAL] = int(user_input[CONF_SCAN_INTERVAL])
-            return self.async_create_entry(data=user_input)
+            # Alexa only fetches audio over HTTPS
+            if user_input.get(CONF_PUBLIC_URL, "https://").startswith("https://"):
+                return self.async_create_entry(data=user_input)
+            errors[CONF_PUBLIC_URL] = "not_https"
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                OPTIONS_SCHEMA, self.config_entry.options
+                OPTIONS_SCHEMA, user_input or self.config_entry.options
             ),
+            errors=errors,
         )

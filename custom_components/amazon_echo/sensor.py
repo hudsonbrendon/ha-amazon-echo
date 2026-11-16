@@ -79,7 +79,18 @@ def _next(key: str, capability: str, *kinds: str) -> AmazonEchoSensorDescription
         )
 
     def attributes(data: AmazonEchoData, device: Device) -> dict[str, Any]:
+        """Describe the next one, and list them all."""
+        now = dt_util.utcnow()
+        every = _notifications(data, device, kinds)
+        active = [n for n in every if n.is_active and n.when and n.when >= now]
+        upcoming = active[0] if active else None
         return {
+            "label": upcoming.label if upcoming else None,
+            "sub_label": upcoming.raw.get("reminderSubLabel") if upcoming else None,
+            "recurrence": upcoming.recurrence if upcoming else None,
+            "status": upcoming.status if upcoming else None,
+            "total_active": len(active),
+            "total_all": len(every),
             "items": [
                 {
                     "id": n.id,
@@ -88,8 +99,8 @@ def _next(key: str, capability: str, *kinds: str) -> AmazonEchoSensorDescription
                     "status": n.status,
                     "recurrence": n.recurrence,
                 }
-                for n in _notifications(data, device, kinds)
-            ]
+                for n in every
+            ],
         }
 
     return AmazonEchoSensorDescription(

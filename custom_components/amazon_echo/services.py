@@ -23,6 +23,7 @@ from amazon_echo.const import INFO_SKILLS
 
 from .const import (
     ATTR_ADDRESS,
+    ATTR_ALARM_TYPE,
     ATTR_DEVICE_ID,
     ATTR_DURATION,
     ATTR_ENDPOINT_ID,
@@ -32,6 +33,8 @@ from .const import (
     ATTR_LIMIT,
     ATTR_MESSAGE,
     ATTR_METHOD,
+    ATTR_MUSIC_ENTITY,
+    ATTR_MUSIC_PROVIDER,
     ATTR_NOTIFICATION_ID,
     ATTR_OPERATION,
     ATTR_PAYLOAD,
@@ -91,6 +94,11 @@ SCHEMAS: dict[str, vol.Schema] = {
             **DEVICE,
             vol.Required(ATTR_TIME): cv.datetime,
             vol.Optional(ATTR_RECURRENCE): cv.string,
+            vol.Optional(ATTR_ALARM_TYPE, default="default"): vol.In(
+                ("default", "music")
+            ),
+            vol.Optional(ATTR_MUSIC_PROVIDER): cv.string,
+            vol.Optional(ATTR_MUSIC_ENTITY): cv.string,
         }
     ),
     SERVICE_CREATE_TIMER: vol.Schema(
@@ -222,6 +230,34 @@ def _find(coordinator: AmazonEchoCoordinator, call: ServiceCall) -> Notification
     raise _error("notification_not_found", notification_id=wanted)
 
 
+def _music_alarm(
+    coordinator: AmazonEchoCoordinator, call: ServiceCall
+) -> Notification | None:
+    """Return the existing music alarm whose station a new one reuses.
+
+    Amazon has no public search for stations, so a music alarm can only wake
+    with a station that an alarm created in the Alexa app (on any device of
+    the account) already has. None for an ordinary alarm.
+    """
+    provider: str = call.data.get(ATTR_MUSIC_PROVIDER, "")
+    entity: str = call.data.get(ATTR_MUSIC_ENTITY, "")
+    if call.data[ATTR_ALARM_TYPE] != "music":
+        if provider or entity:
+            raise _error("music_alarm_fields")
+        return None
+    if not provider or not entity:
+        raise _error("music_alarm_fields")
+    wanted = (provider.strip().casefold(), entity.strip().casefold())
+    for notification in coordinator.data.notifications:
+        raw = notification.raw
+        if notification.kind == "music_alarm" and wanted == (
+            str(raw.get("provider") or "").strip().casefold(),
+            str(raw.get("musicEntity") or "").strip().casefold(),
+        ):
+            return notification
+    raise _error("no_music_alarm", music_provider=provider, music_entity=entity)
+
+
 def _local(value: datetime) -> datetime:
     """Treat a naive time as local time."""
     return dt_util.as_local(value)
@@ -250,11 +286,13 @@ def async_setup_services(hass: HomeAssistant) -> None:
 
     async def create_alarm(call: ServiceCall) -> ServiceResponse:
         c, device = _resolve_device(hass, call)
+        music = _music_alarm(c, call)
         created = await c.async_write(
             c.client.create_alarm(
                 device,
                 _local(call.data[ATTR_TIME]),
                 recurrence=call.data.get(ATTR_RECURRENCE),
+                music=music,
             ),
             refresh="notifications",
         )
@@ -410,7 +448,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
         c, device = _resolve_device(hass, call)
         if (last := c.last_messages.get(device.serial)) is None:
             raise _error("no_last_message")
-        kind, message, title = last
+        kind, message, title, _ = last
         await c.async_say(kind, [device], message, title)
 
     async def call_feature(call: ServiceCall) -> None:

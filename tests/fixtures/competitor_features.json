@@ -1,0 +1,1758 @@
+{
+  "generated_by": "scripts/extract_competitor_features.py",
+  "competitors": {
+    "amp": {
+      "name": "Alexa Media Player",
+      "version": "5.21.0",
+      "commit": "b7b6c72ecb88bb8f144c7689ac9770a74d7f9c1f",
+      "library": "alexapy",
+      "library_version": "1.31.0",
+      "library_commit": "7c4d3b07d4f67ddedac6ff1eaea9965b54508025",
+      "feature_count": 198,
+      "features_by_kind": {
+        "attribute": 27,
+        "diagnostics": 2,
+        "entity": 22,
+        "entity_key": 18,
+        "event": 6,
+        "feature": 19,
+        "flow": 4,
+        "notify_data": 2,
+        "notify_target": 1,
+        "notify_type": 4,
+        "option": 17,
+        "platform": 10,
+        "play_media": 8,
+        "play_media_option": 2,
+        "push": 11,
+        "sensor_type": 6,
+        "service": 14,
+        "service_field": 25
+      }
+    },
+    "core": {
+      "name": "Alexa Devices (Home Assistant core)",
+      "version": "2026.12.0.dev0",
+      "commit": "016643df6f9eb3c6157a14e4aed15cce2a62b32a",
+      "library": "aioamazondevices",
+      "library_version": "17.2.12",
+      "library_commit": "9f2a9fafc7e48959258b02b2124df4b5a2fda6df",
+      "feature_count": 104,
+      "features_by_kind": {
+        "diagnostics": 2,
+        "entity": 34,
+        "entity_key": 15,
+        "event_attribute": 5,
+        "event_type": 1,
+        "feature": 15,
+        "flow": 3,
+        "option": 3,
+        "platform": 10,
+        "play_media": 1,
+        "push": 6,
+        "service": 3,
+        "service_field": 6
+      }
+    }
+  },
+  "features": {
+    "amp:attribute:media_player.AlexaClient.available": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.available",
+      "source": "AMP media_player.py:2128"
+    },
+    "amp:attribute:media_player.AlexaClient.bluetooth_list": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.bluetooth_list",
+      "source": "AMP media_player.py:2134"
+    },
+    "amp:attribute:media_player.AlexaClient.connected_bluetooth": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.connected_bluetooth",
+      "source": "AMP media_player.py:2133"
+    },
+    "amp:attribute:media_player.AlexaClient.history_records": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.history_records",
+      "source": "AMP media_player.py:2135"
+    },
+    "amp:attribute:media_player.AlexaClient.last_called": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.last_called",
+      "source": "AMP media_player.py:2129"
+    },
+    "amp:attribute:media_player.AlexaClient.last_called_response": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.last_called_response",
+      "source": "AMP media_player.py:2132"
+    },
+    "amp:attribute:media_player.AlexaClient.last_called_summary": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.last_called_summary",
+      "source": "AMP media_player.py:2131"
+    },
+    "amp:attribute:media_player.AlexaClient.last_called_timestamp": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.last_called_timestamp",
+      "source": "AMP media_player.py:2130"
+    },
+    "amp:attribute:media_player.AlexaClient.last_message": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.last_message",
+      "source": "AMP media_player.py:2137"
+    },
+    "amp:attribute:media_player.AlexaClient.last_message_timestamp": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.last_message_timestamp",
+      "source": "AMP media_player.py:2139"
+    },
+    "amp:attribute:media_player.AlexaClient.last_message_type": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.last_message_type",
+      "source": "AMP media_player.py:2138"
+    },
+    "amp:attribute:media_player.AlexaClient.locale": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.locale",
+      "source": "AMP media_player.py:2127"
+    },
+    "amp:attribute:media_player.AlexaClient.previous_volume": {
+      "kind": "attribute",
+      "name": "media_player.AlexaClient.previous_volume",
+      "source": "AMP media_player.py:2136"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.*": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.*",
+      "source": "AMP sensor.py:1177"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.brief": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.brief",
+      "source": "AMP sensor.py:1156"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.dismissed": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.dismissed",
+      "source": "AMP sensor.py:1123"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.prior_value": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.prior_value",
+      "source": "AMP sensor.py:1119"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.process_timestamp": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.process_timestamp",
+      "source": "AMP sensor.py:1116"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.recurrence": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.recurrence",
+      "source": "AMP sensor.py:1115"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.reminder_sub_label": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.reminder_sub_label",
+      "source": "AMP sensor.py:1181"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.sorted_active": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.sorted_active",
+      "source": "AMP sensor.py:1169"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.sorted_all": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.sorted_all",
+      "source": "AMP sensor.py:1168"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.status": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.status",
+      "source": "AMP sensor.py:1122"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.total_active": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.total_active",
+      "source": "AMP sensor.py:1120"
+    },
+    "amp:attribute:sensor.AlexaMediaNotificationSensor.total_all": {
+      "kind": "attribute",
+      "name": "sensor.AlexaMediaNotificationSensor.total_all",
+      "source": "AMP sensor.py:1121"
+    },
+    "amp:attribute:sensor.ReminderSensor.reminder": {
+      "kind": "attribute",
+      "name": "sensor.ReminderSensor.reminder",
+      "source": "AMP sensor.py:1308"
+    },
+    "amp:attribute:sensor.TimerSensor.timer": {
+      "kind": "attribute",
+      "name": "sensor.TimerSensor.timer",
+      "source": "AMP sensor.py:1264"
+    },
+    "amp:diagnostics:config_entry": {
+      "kind": "diagnostics",
+      "name": "config_entry",
+      "source": "AMP diagnostics.py:357"
+    },
+    "amp:diagnostics:device": {
+      "kind": "diagnostics",
+      "name": "device",
+      "source": "AMP diagnostics.py:410"
+    },
+    "amp:entity:alarm_control_panel.AlexaAlarmControlPanel": {
+      "kind": "entity",
+      "name": "alarm_control_panel.AlexaAlarmControlPanel",
+      "source": "AMP alarm_control_panel.py:133"
+    },
+    "amp:entity:binary_sensor.AlexaContact": {
+      "kind": "entity",
+      "name": "binary_sensor.AlexaContact",
+      "source": "AMP binary_sensor.py:115"
+    },
+    "amp:entity:binary_sensor.AmazonKidsSensor": {
+      "kind": "entity",
+      "name": "binary_sensor.AmazonKidsSensor",
+      "source": "AMP binary_sensor.py:160"
+    },
+    "amp:entity:button.AlexaRestartButton": {
+      "kind": "entity",
+      "name": "button.AlexaRestartButton",
+      "source": "AMP button.py:90"
+    },
+    "amp:entity:light.AlexaLight": {
+      "kind": "entity",
+      "name": "light.AlexaLight",
+      "source": "AMP light.py:127"
+    },
+    "amp:entity:media_player.AlexaClient": {
+      "kind": "entity",
+      "name": "media_player.AlexaClient",
+      "source": "AMP media_player.py:233"
+    },
+    "amp:entity:notify.AlexaNotificationService": {
+      "kind": "entity",
+      "name": "notify.AlexaNotificationService",
+      "source": "AMP notify.py:83"
+    },
+    "amp:entity:number.AlexaDisplayBrightness": {
+      "kind": "entity",
+      "name": "number.AlexaDisplayBrightness",
+      "source": "AMP display.py:338"
+    },
+    "amp:entity:number.AlexaNotificationVolume": {
+      "kind": "entity",
+      "name": "number.AlexaNotificationVolume",
+      "source": "AMP number.py:97"
+    },
+    "amp:entity:select.AmazonKidsChildSelect": {
+      "kind": "entity",
+      "name": "select.AmazonKidsChildSelect",
+      "source": "AMP select.py:85"
+    },
+    "amp:entity:sensor.AirQualitySensor": {
+      "kind": "entity",
+      "name": "sensor.AirQualitySensor",
+      "source": "AMP sensor.py:464"
+    },
+    "amp:entity:sensor.AlarmSensor": {
+      "kind": "entity",
+      "name": "sensor.AlarmSensor",
+      "source": "AMP sensor.py:1185"
+    },
+    "amp:entity:sensor.ReminderSensor": {
+      "kind": "entity",
+      "name": "sensor.ReminderSensor",
+      "source": "AMP sensor.py:1268"
+    },
+    "amp:entity:sensor.TemperatureSensor": {
+      "kind": "entity",
+      "name": "sensor.TemperatureSensor",
+      "source": "AMP sensor.py:340"
+    },
+    "amp:entity:sensor.TimerSensor": {
+      "kind": "entity",
+      "name": "sensor.TimerSensor",
+      "source": "AMP sensor.py:1205"
+    },
+    "amp:entity:switch.AlexaAdaptiveBrightnessSwitch": {
+      "kind": "entity",
+      "name": "switch.AlexaAdaptiveBrightnessSwitch",
+      "source": "AMP display.py:296"
+    },
+    "amp:entity:switch.AlexaDisplayPowerSwitch": {
+      "kind": "entity",
+      "name": "switch.AlexaDisplayPowerSwitch",
+      "source": "AMP display.py:254"
+    },
+    "amp:entity:switch.AmazonKidsSwitch": {
+      "kind": "entity",
+      "name": "switch.AmazonKidsSwitch",
+      "source": "AMP switch.py:572"
+    },
+    "amp:entity:switch.DNDSwitch": {
+      "kind": "entity",
+      "name": "switch.DNDSwitch",
+      "source": "AMP switch.py:412"
+    },
+    "amp:entity:switch.RepeatSwitch": {
+      "kind": "entity",
+      "name": "switch.RepeatSwitch",
+      "source": "AMP switch.py:471"
+    },
+    "amp:entity:switch.ShuffleSwitch": {
+      "kind": "entity",
+      "name": "switch.ShuffleSwitch",
+      "source": "AMP switch.py:455"
+    },
+    "amp:entity:switch.SmartSwitch": {
+      "kind": "entity",
+      "name": "switch.SmartSwitch",
+      "source": "AMP switch.py:487"
+    },
+    "amp:entity_key:button.restart": {
+      "kind": "entity_key",
+      "name": "button.restart",
+      "source": "AMP strings.json:273"
+    },
+    "amp:entity_key:number.display_brightness": {
+      "kind": "entity_key",
+      "name": "number.display_brightness",
+      "source": "AMP strings.json:281"
+    },
+    "amp:entity_key:number.notification_volume": {
+      "kind": "entity_key",
+      "name": "number.notification_volume",
+      "source": "AMP strings.json:278"
+    },
+    "amp:entity_key:sensor.air_quality": {
+      "kind": "entity_key",
+      "name": "sensor.air_quality",
+      "source": "AMP strings.json:306"
+    },
+    "amp:entity_key:sensor.air_quality_carbon_monoxide": {
+      "kind": "entity_key",
+      "name": "sensor.air_quality_carbon_monoxide",
+      "source": "AMP strings.json:309"
+    },
+    "amp:entity_key:sensor.air_quality_humidity": {
+      "kind": "entity_key",
+      "name": "sensor.air_quality_humidity",
+      "source": "AMP strings.json:312"
+    },
+    "amp:entity_key:sensor.air_quality_indoor_air_quality": {
+      "kind": "entity_key",
+      "name": "sensor.air_quality_indoor_air_quality",
+      "source": "AMP strings.json:315"
+    },
+    "amp:entity_key:sensor.air_quality_particulate_matter": {
+      "kind": "entity_key",
+      "name": "sensor.air_quality_particulate_matter",
+      "source": "AMP strings.json:318"
+    },
+    "amp:entity_key:sensor.air_quality_volatile_organic_compounds": {
+      "kind": "entity_key",
+      "name": "sensor.air_quality_volatile_organic_compounds",
+      "source": "AMP strings.json:321"
+    },
+    "amp:entity_key:sensor.next_alarm": {
+      "kind": "entity_key",
+      "name": "sensor.next_alarm",
+      "source": "AMP strings.json:324"
+    },
+    "amp:entity_key:sensor.next_reminder": {
+      "kind": "entity_key",
+      "name": "sensor.next_reminder",
+      "source": "AMP strings.json:330"
+    },
+    "amp:entity_key:sensor.next_timer": {
+      "kind": "entity_key",
+      "name": "sensor.next_timer",
+      "source": "AMP strings.json:327"
+    },
+    "amp:entity_key:sensor.temperature": {
+      "kind": "entity_key",
+      "name": "sensor.temperature",
+      "source": "AMP strings.json:303"
+    },
+    "amp:entity_key:switch.adaptive_brightness": {
+      "kind": "entity_key",
+      "name": "switch.adaptive_brightness",
+      "source": "AMP strings.json:298"
+    },
+    "amp:entity_key:switch.display_power": {
+      "kind": "entity_key",
+      "name": "switch.display_power",
+      "source": "AMP strings.json:295"
+    },
+    "amp:entity_key:switch.do_not_disturb": {
+      "kind": "entity_key",
+      "name": "switch.do_not_disturb",
+      "source": "AMP strings.json:286"
+    },
+    "amp:entity_key:switch.repeat": {
+      "kind": "entity_key",
+      "name": "switch.repeat",
+      "source": "AMP strings.json:292"
+    },
+    "amp:entity_key:switch.shuffle": {
+      "kind": "entity_key",
+      "name": "switch.shuffle",
+      "source": "AMP strings.json:289"
+    },
+    "amp:event:alexa_media_alarm_dismissal_event": {
+      "kind": "event",
+      "name": "alexa_media_alarm_dismissal_event",
+      "source": "AMP __init__.py:1670"
+    },
+    "amp:event:alexa_media_last_called_event": {
+      "kind": "event",
+      "name": "alexa_media_last_called_event",
+      "source": "AMP media_player.py:2280"
+    },
+    "amp:event:alexa_media_notification_event": {
+      "kind": "event",
+      "name": "alexa_media_notification_event",
+      "source": "AMP sensor.py:868"
+    },
+    "amp:event:alexa_media_relogin_required": {
+      "kind": "event",
+      "name": "alexa_media_relogin_required",
+      "source": "AMP __init__.py:3160"
+    },
+    "amp:event:alexa_media_relogin_success": {
+      "kind": "event",
+      "name": "alexa_media_relogin_success",
+      "source": "AMP config_flow.py:819"
+    },
+    "amp:event:alexa_media_voice_command": {
+      "kind": "event",
+      "name": "alexa_media_voice_command",
+      "source": "AMP __init__.py:2124"
+    },
+    "amp:feature:AlarmControlPanelEntityFeature.ARM_AWAY": {
+      "kind": "feature",
+      "name": "AlarmControlPanelEntityFeature.ARM_AWAY",
+      "source": "AMP alarm_control_panel.py:243"
+    },
+    "amp:feature:ColorMode.BRIGHTNESS": {
+      "kind": "feature",
+      "name": "ColorMode.BRIGHTNESS",
+      "source": "AMP light.py:123"
+    },
+    "amp:feature:ColorMode.COLOR_TEMP": {
+      "kind": "feature",
+      "name": "ColorMode.COLOR_TEMP",
+      "source": "AMP light.py:117"
+    },
+    "amp:feature:ColorMode.HS": {
+      "kind": "feature",
+      "name": "ColorMode.HS",
+      "source": "AMP light.py:117"
+    },
+    "amp:feature:ColorMode.ONOFF": {
+      "kind": "feature",
+      "name": "ColorMode.ONOFF",
+      "source": "AMP light.py:124"
+    },
+    "amp:feature:MediaPlayerEntityFeature.NEXT_TRACK": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.NEXT_TRACK",
+      "source": "AMP media_player.py:85"
+    },
+    "amp:feature:MediaPlayerEntityFeature.PAUSE": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PAUSE",
+      "source": "AMP media_player.py:68"
+    },
+    "amp:feature:MediaPlayerEntityFeature.PLAY": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PLAY",
+      "source": "AMP media_player.py:74"
+    },
+    "amp:feature:MediaPlayerEntityFeature.PLAY_MEDIA": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PLAY_MEDIA",
+      "source": "AMP media_player.py:75"
+    },
+    "amp:feature:MediaPlayerEntityFeature.PREVIOUS_TRACK": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PREVIOUS_TRACK",
+      "source": "AMP media_player.py:86"
+    },
+    "amp:feature:MediaPlayerEntityFeature.REPEAT_SET": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.REPEAT_SET",
+      "source": "AMP media_player.py:81"
+    },
+    "amp:feature:MediaPlayerEntityFeature.SEEK": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.SEEK",
+      "source": "AMP media_player.py:89"
+    },
+    "amp:feature:MediaPlayerEntityFeature.SELECT_SOURCE": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.SELECT_SOURCE",
+      "source": "AMP media_player.py:79"
+    },
+    "amp:feature:MediaPlayerEntityFeature.SHUFFLE_SET": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.SHUFFLE_SET",
+      "source": "AMP media_player.py:87"
+    },
+    "amp:feature:MediaPlayerEntityFeature.STOP": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.STOP",
+      "source": "AMP media_player.py:72"
+    },
+    "amp:feature:MediaPlayerEntityFeature.TURN_OFF": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.TURN_OFF",
+      "source": "AMP media_player.py:76"
+    },
+    "amp:feature:MediaPlayerEntityFeature.TURN_ON": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.TURN_ON",
+      "source": "AMP media_player.py:77"
+    },
+    "amp:feature:MediaPlayerEntityFeature.VOLUME_MUTE": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.VOLUME_MUTE",
+      "source": "AMP media_player.py:78"
+    },
+    "amp:feature:MediaPlayerEntityFeature.VOLUME_SET": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.VOLUME_SET",
+      "source": "AMP media_player.py:73"
+    },
+    "amp:flow:import": {
+      "kind": "flow",
+      "name": "import",
+      "source": "AMP config_flow.py:164"
+    },
+    "amp:flow:options": {
+      "kind": "flow",
+      "name": "options",
+      "source": "AMP config_flow.py:1036"
+    },
+    "amp:flow:reauth": {
+      "kind": "flow",
+      "name": "reauth",
+      "source": "AMP config_flow.py:688"
+    },
+    "amp:flow:user": {
+      "kind": "flow",
+      "name": "user",
+      "source": "AMP config_flow.py:168"
+    },
+    "amp:notify_data:method": {
+      "kind": "notify_data",
+      "name": "method",
+      "source": "AMP notify.py:334"
+    },
+    "amp:notify_data:type": {
+      "kind": "notify_data",
+      "name": "type",
+      "source": "AMP notify.py:299"
+    },
+    "amp:notify_target:last_called": {
+      "kind": "notify_target",
+      "name": "last_called",
+      "source": "AMP notify.py:182"
+    },
+    "amp:notify_type:announce": {
+      "kind": "notify_type",
+      "name": "announce",
+      "source": "AMP notify.py:317"
+    },
+    "amp:notify_type:dropin_notification": {
+      "kind": "notify_type",
+      "name": "dropin_notification",
+      "source": "AMP notify.py:369"
+    },
+    "amp:notify_type:push": {
+      "kind": "notify_type",
+      "name": "push",
+      "source": "AMP notify.py:354"
+    },
+    "amp:notify_type:tts": {
+      "kind": "notify_type",
+      "name": "tts",
+      "source": "AMP notify.py:301"
+    },
+    "amp:option:debug": {
+      "kind": "option",
+      "name": "debug",
+      "source": "AMP strings.json:22",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:email": {
+      "kind": "option",
+      "name": "email",
+      "source": "AMP strings.json:23",
+      "flows": [
+        "config.user"
+      ]
+    },
+    "amp:option:exclude_devices": {
+      "kind": "option",
+      "name": "exclude_devices",
+      "source": "AMP strings.json:24",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:extended_entity_discovery": {
+      "kind": "option",
+      "name": "extended_entity_discovery",
+      "source": "AMP strings.json:25",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:hass_url": {
+      "kind": "option",
+      "name": "hass_url",
+      "source": "AMP strings.json:26",
+      "flows": [
+        "config.user"
+      ]
+    },
+    "amp:option:include_devices": {
+      "kind": "option",
+      "name": "include_devices",
+      "source": "AMP strings.json:27",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:otp_secret": {
+      "kind": "option",
+      "name": "otp_secret",
+      "source": "AMP strings.json:28",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:password": {
+      "kind": "option",
+      "name": "password",
+      "source": "AMP strings.json:29",
+      "flows": [
+        "config.user"
+      ]
+    },
+    "amp:option:proxy_warning": {
+      "kind": "option",
+      "name": "proxy_warning",
+      "source": "AMP strings.json:49",
+      "flows": [
+        "config.proxy_warning"
+      ]
+    },
+    "amp:option:public_url": {
+      "kind": "option",
+      "name": "public_url",
+      "source": "AMP strings.json:30",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:queue_delay": {
+      "kind": "option",
+      "name": "queue_delay",
+      "source": "AMP strings.json:31",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:registered": {
+      "kind": "option",
+      "name": "registered",
+      "source": "AMP strings.json:58",
+      "flows": [
+        "config.totp_register"
+      ]
+    },
+    "amp:option:scan_interval": {
+      "kind": "option",
+      "name": "scan_interval",
+      "source": "AMP strings.json:32",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:securitycode": {
+      "kind": "option",
+      "name": "securitycode",
+      "source": "AMP strings.json:33",
+      "flows": [
+        "config.user"
+      ]
+    },
+    "amp:option:should_get_network": {
+      "kind": "option",
+      "name": "should_get_network",
+      "source": "AMP strings.json:34",
+      "flows": [
+        "config.user",
+        "options.init"
+      ]
+    },
+    "amp:option:url": {
+      "kind": "option",
+      "name": "url",
+      "source": "AMP strings.json:35",
+      "flows": [
+        "config.user"
+      ]
+    },
+    "amp:option:use_reported_domain": {
+      "kind": "option",
+      "name": "use_reported_domain",
+      "source": "AMP strings.json:46",
+      "flows": [
+        "config.domain_mismatch"
+      ]
+    },
+    "amp:platform:alarm_control_panel": {
+      "kind": "platform",
+      "name": "alarm_control_panel",
+      "source": "AMP alarm_control_panel.py:1"
+    },
+    "amp:platform:binary_sensor": {
+      "kind": "platform",
+      "name": "binary_sensor",
+      "source": "AMP binary_sensor.py:1"
+    },
+    "amp:platform:button": {
+      "kind": "platform",
+      "name": "button",
+      "source": "AMP button.py:1"
+    },
+    "amp:platform:light": {
+      "kind": "platform",
+      "name": "light",
+      "source": "AMP light.py:1"
+    },
+    "amp:platform:media_player": {
+      "kind": "platform",
+      "name": "media_player",
+      "source": "AMP media_player.py:1"
+    },
+    "amp:platform:notify": {
+      "kind": "platform",
+      "name": "notify",
+      "source": "AMP notify.py:1"
+    },
+    "amp:platform:number": {
+      "kind": "platform",
+      "name": "number",
+      "source": "AMP number.py:1"
+    },
+    "amp:platform:select": {
+      "kind": "platform",
+      "name": "select",
+      "source": "AMP select.py:1"
+    },
+    "amp:platform:sensor": {
+      "kind": "platform",
+      "name": "sensor",
+      "source": "AMP sensor.py:1"
+    },
+    "amp:platform:switch": {
+      "kind": "platform",
+      "name": "switch",
+      "source": "AMP switch.py:1"
+    },
+    "amp:play_media:*": {
+      "kind": "play_media",
+      "name": "*",
+      "source": "AMP media_player.py:2101"
+    },
+    "amp:play_media:custom": {
+      "kind": "play_media",
+      "name": "custom",
+      "source": "AMP media_player.py:2058"
+    },
+    "amp:play_media:image": {
+      "kind": "play_media",
+      "name": "image",
+      "source": "AMP media_player.py:2047"
+    },
+    "amp:play_media:music": {
+      "kind": "play_media",
+      "name": "music",
+      "source": "AMP media_player.py:1951"
+    },
+    "amp:play_media:routine": {
+      "kind": "play_media",
+      "name": "routine",
+      "source": "AMP media_player.py:1983"
+    },
+    "amp:play_media:sequence": {
+      "kind": "play_media",
+      "name": "sequence",
+      "source": "AMP media_player.py:1959"
+    },
+    "amp:play_media:skill": {
+      "kind": "play_media",
+      "name": "skill",
+      "source": "AMP media_player.py:2027"
+    },
+    "amp:play_media:sound": {
+      "kind": "play_media",
+      "name": "sound",
+      "source": "AMP media_player.py:2003"
+    },
+    "amp:play_media_option:announce": {
+      "kind": "play_media_option",
+      "name": "announce",
+      "source": "AMP media_player.py:1890"
+    },
+    "amp:play_media_option:extra.timer": {
+      "kind": "play_media_option",
+      "name": "extra.timer",
+      "source": "AMP media_player.py:2091"
+    },
+    "amp:push:NotifyMediaSessionsUpdated": {
+      "kind": "push",
+      "name": "NotifyMediaSessionsUpdated",
+      "source": "AMP __init__.py:2800"
+    },
+    "amp:push:NotifyNowPlayingUpdated": {
+      "kind": "push",
+      "name": "NotifyNowPlayingUpdated",
+      "source": "AMP __init__.py:2800"
+    },
+    "amp:push:PUSH_AUDIO_PLAYER_STATE": {
+      "kind": "push",
+      "name": "PUSH_AUDIO_PLAYER_STATE",
+      "source": "AMP __init__.py:2800"
+    },
+    "amp:push:PUSH_BLUETOOTH_STATE_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_BLUETOOTH_STATE_CHANGE",
+      "source": "AMP __init__.py:2892"
+    },
+    "amp:push:PUSH_DOPPLER_CONNECTION_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_DOPPLER_CONNECTION_CHANGE",
+      "source": "AMP __init__.py:2850"
+    },
+    "amp:push:PUSH_EQUALIZER_STATE_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_EQUALIZER_STATE_CHANGE",
+      "source": "AMP __init__.py:2863"
+    },
+    "amp:push:PUSH_MEDIA_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_MEDIA_CHANGE",
+      "source": "AMP __init__.py:2800"
+    },
+    "amp:push:PUSH_MEDIA_PROGRESS_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_MEDIA_PROGRESS_CHANGE",
+      "source": "AMP __init__.py:2800"
+    },
+    "amp:push:PUSH_MEDIA_QUEUE_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_MEDIA_QUEUE_CHANGE",
+      "source": "AMP __init__.py:2935"
+    },
+    "amp:push:PUSH_NOTIFICATION_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_NOTIFICATION_CHANGE",
+      "source": "AMP __init__.py:2948"
+    },
+    "amp:push:PUSH_VOLUME_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_VOLUME_CHANGE",
+      "source": "AMP __init__.py:2824"
+    },
+    "amp:sensor_type:Alexa.AirQuality.CarbonMonoxide": {
+      "kind": "sensor_type",
+      "name": "Alexa.AirQuality.CarbonMonoxide",
+      "source": "AMP const.py:266"
+    },
+    "amp:sensor_type:Alexa.AirQuality.Humidity": {
+      "kind": "sensor_type",
+      "name": "Alexa.AirQuality.Humidity",
+      "source": "AMP const.py:270"
+    },
+    "amp:sensor_type:Alexa.AirQuality.IndoorAirQuality": {
+      "kind": "sensor_type",
+      "name": "Alexa.AirQuality.IndoorAirQuality",
+      "source": "AMP const.py:267"
+    },
+    "amp:sensor_type:Alexa.AirQuality.ParticulateMatter": {
+      "kind": "sensor_type",
+      "name": "Alexa.AirQuality.ParticulateMatter",
+      "source": "AMP const.py:264"
+    },
+    "amp:sensor_type:Alexa.AirQuality.ParticulateMatterPM10": {
+      "kind": "sensor_type",
+      "name": "Alexa.AirQuality.ParticulateMatterPM10",
+      "source": "AMP const.py:265"
+    },
+    "amp:sensor_type:Alexa.AirQuality.VolatileOrganicCompounds": {
+      "kind": "sensor_type",
+      "name": "Alexa.AirQuality.VolatileOrganicCompounds",
+      "source": "AMP const.py:269"
+    },
+    "amp:service:amazon_kids_disable": {
+      "kind": "service",
+      "name": "amazon_kids_disable",
+      "source": "AMP services.yaml:92"
+    },
+    "amp:service:amazon_kids_enable": {
+      "kind": "service",
+      "name": "amazon_kids_enable",
+      "source": "AMP services.yaml:72"
+    },
+    "amp:service:create_alarm": {
+      "kind": "service",
+      "name": "create_alarm",
+      "source": "AMP services.yaml:105"
+    },
+    "amp:service:delete_alarm": {
+      "kind": "service",
+      "name": "delete_alarm",
+      "source": "AMP services.yaml:205"
+    },
+    "amp:service:disable_alarm": {
+      "kind": "service",
+      "name": "disable_alarm",
+      "source": "AMP services.yaml:200"
+    },
+    "amp:service:enable_alarm": {
+      "kind": "service",
+      "name": "enable_alarm",
+      "source": "AMP services.yaml:181"
+    },
+    "amp:service:enable_network_discovery": {
+      "kind": "service",
+      "name": "enable_network_discovery",
+      "source": "AMP services.yaml:56"
+    },
+    "amp:service:force_logout": {
+      "kind": "service",
+      "name": "force_logout",
+      "source": "AMP services.yaml:2"
+    },
+    "amp:service:get_history_records": {
+      "kind": "service",
+      "name": "get_history_records",
+      "source": "AMP services.yaml:26"
+    },
+    "amp:service:list_alarms": {
+      "kind": "service",
+      "name": "list_alarms",
+      "source": "AMP services.yaml:169"
+    },
+    "amp:service:repeat_last_message": {
+      "kind": "service",
+      "name": "repeat_last_message",
+      "source": "AMP services.yaml:217"
+    },
+    "amp:service:restore_volume": {
+      "kind": "service",
+      "name": "restore_volume",
+      "source": "AMP services.yaml:14"
+    },
+    "amp:service:skip_next_alarm": {
+      "kind": "service",
+      "name": "skip_next_alarm",
+      "source": "AMP services.yaml:210"
+    },
+    "amp:service:update_last_called": {
+      "kind": "service",
+      "name": "update_last_called",
+      "source": "AMP services.yaml:44"
+    },
+    "amp:service_field:amazon_kids_disable.entity_id": {
+      "kind": "service_field",
+      "name": "amazon_kids_disable.entity_id",
+      "source": "AMP services.yaml:96"
+    },
+    "amp:service_field:amazon_kids_enable.child": {
+      "kind": "service_field",
+      "name": "amazon_kids_enable.child",
+      "source": "AMP services.yaml:84"
+    },
+    "amp:service_field:amazon_kids_enable.entity_id": {
+      "kind": "service_field",
+      "name": "amazon_kids_enable.entity_id",
+      "source": "AMP services.yaml:76"
+    },
+    "amp:service_field:create_alarm.alarm_type": {
+      "kind": "service_field",
+      "name": "create_alarm.alarm_type",
+      "source": "AMP services.yaml:148",
+      "options": [
+        "default",
+        "music"
+      ]
+    },
+    "amp:service_field:create_alarm.days": {
+      "kind": "service_field",
+      "name": "create_alarm.days",
+      "source": "AMP services.yaml:124",
+      "options": [
+        "everyday",
+        "fri",
+        "mon",
+        "sat",
+        "sun",
+        "thu",
+        "today",
+        "tomorrow",
+        "tue",
+        "wed",
+        "weekdays",
+        "weekends"
+      ]
+    },
+    "amp:service_field:create_alarm.entity_id": {
+      "kind": "service_field",
+      "name": "create_alarm.entity_id",
+      "source": "AMP services.yaml:109"
+    },
+    "amp:service_field:create_alarm.music_entity": {
+      "kind": "service_field",
+      "name": "create_alarm.music_entity",
+      "source": "AMP services.yaml:163"
+    },
+    "amp:service_field:create_alarm.music_provider": {
+      "kind": "service_field",
+      "name": "create_alarm.music_provider",
+      "source": "AMP services.yaml:158"
+    },
+    "amp:service_field:create_alarm.time": {
+      "kind": "service_field",
+      "name": "create_alarm.time",
+      "source": "AMP services.yaml:117"
+    },
+    "amp:service_field:delete_alarm.alarm_id": {
+      "kind": "service_field",
+      "name": "delete_alarm.alarm_id",
+      "source": "AMP services.yaml:193"
+    },
+    "amp:service_field:delete_alarm.entity_id": {
+      "kind": "service_field",
+      "name": "delete_alarm.entity_id",
+      "source": "AMP services.yaml:185"
+    },
+    "amp:service_field:disable_alarm.alarm_id": {
+      "kind": "service_field",
+      "name": "disable_alarm.alarm_id",
+      "source": "AMP services.yaml:193"
+    },
+    "amp:service_field:disable_alarm.entity_id": {
+      "kind": "service_field",
+      "name": "disable_alarm.entity_id",
+      "source": "AMP services.yaml:185"
+    },
+    "amp:service_field:enable_alarm.alarm_id": {
+      "kind": "service_field",
+      "name": "enable_alarm.alarm_id",
+      "source": "AMP services.yaml:193"
+    },
+    "amp:service_field:enable_alarm.entity_id": {
+      "kind": "service_field",
+      "name": "enable_alarm.entity_id",
+      "source": "AMP services.yaml:185"
+    },
+    "amp:service_field:enable_network_discovery.email": {
+      "kind": "service_field",
+      "name": "enable_network_discovery.email",
+      "source": "AMP services.yaml:62"
+    },
+    "amp:service_field:force_logout.email": {
+      "kind": "service_field",
+      "name": "force_logout.email",
+      "source": "AMP services.yaml:8"
+    },
+    "amp:service_field:get_history_records.entity_id": {
+      "kind": "service_field",
+      "name": "get_history_records.entity_id",
+      "source": "AMP services.yaml:29"
+    },
+    "amp:service_field:get_history_records.entries": {
+      "kind": "service_field",
+      "name": "get_history_records.entries",
+      "source": "AMP services.yaml:37"
+    },
+    "amp:service_field:list_alarms.entity_id": {
+      "kind": "service_field",
+      "name": "list_alarms.entity_id",
+      "source": "AMP services.yaml:173"
+    },
+    "amp:service_field:repeat_last_message.entity_id": {
+      "kind": "service_field",
+      "name": "repeat_last_message.entity_id",
+      "source": "AMP services.yaml:224"
+    },
+    "amp:service_field:restore_volume.entity_id": {
+      "kind": "service_field",
+      "name": "restore_volume.entity_id",
+      "source": "AMP services.yaml:17"
+    },
+    "amp:service_field:skip_next_alarm.alarm_id": {
+      "kind": "service_field",
+      "name": "skip_next_alarm.alarm_id",
+      "source": "AMP services.yaml:193"
+    },
+    "amp:service_field:skip_next_alarm.entity_id": {
+      "kind": "service_field",
+      "name": "skip_next_alarm.entity_id",
+      "source": "AMP services.yaml:185"
+    },
+    "amp:service_field:update_last_called.email": {
+      "kind": "service_field",
+      "name": "update_last_called.email",
+      "source": "AMP services.yaml:50"
+    },
+    "core:diagnostics:config_entry": {
+      "kind": "diagnostics",
+      "name": "config_entry",
+      "source": "core diagnostics.py:34"
+    },
+    "core:diagnostics:device": {
+      "kind": "diagnostics",
+      "name": "device",
+      "source": "core diagnostics.py:55"
+    },
+    "core:entity:binary_sensor.babyCryDetectionState": {
+      "kind": "entity",
+      "name": "binary_sensor.babyCryDetectionState",
+      "source": "core binary_sensor.py:69",
+      "translation_key": "baby_cry_detection",
+      "deprecated": true
+    },
+    "core:entity:binary_sensor.beepingApplianceDetectionState": {
+      "kind": "entity",
+      "name": "binary_sensor.beepingApplianceDetectionState",
+      "source": "core binary_sensor.py:74",
+      "translation_key": "beeping_appliance_detection",
+      "deprecated": true
+    },
+    "core:entity:binary_sensor.bluetooth": {
+      "kind": "entity",
+      "name": "binary_sensor.bluetooth",
+      "source": "core binary_sensor.py:63",
+      "translation_key": "bluetooth",
+      "deprecated": true
+    },
+    "core:entity:binary_sensor.coughDetectionState": {
+      "kind": "entity",
+      "name": "binary_sensor.coughDetectionState",
+      "source": "core binary_sensor.py:79",
+      "translation_key": "cough_detection",
+      "deprecated": true
+    },
+    "core:entity:binary_sensor.detectionState": {
+      "kind": "entity",
+      "name": "binary_sensor.detectionState",
+      "source": "core binary_sensor.py:44"
+    },
+    "core:entity:binary_sensor.dogBarkDetectionState": {
+      "kind": "entity",
+      "name": "binary_sensor.dogBarkDetectionState",
+      "source": "core binary_sensor.py:84",
+      "translation_key": "dog_bark_detection",
+      "deprecated": true
+    },
+    "core:entity:binary_sensor.online": {
+      "kind": "entity",
+      "name": "binary_sensor.online",
+      "source": "core binary_sensor.py:38"
+    },
+    "core:entity:binary_sensor.waterSoundsDetectionState": {
+      "kind": "entity",
+      "name": "binary_sensor.waterSoundsDetectionState",
+      "source": "core binary_sensor.py:89",
+      "translation_key": "water_sounds_detection",
+      "deprecated": true
+    },
+    "core:entity:button.*": {
+      "kind": "entity",
+      "name": "button.*",
+      "source": "core button.py:86"
+    },
+    "core:entity:button.restart": {
+      "kind": "entity",
+      "name": "button.restart",
+      "source": "core button.py:32"
+    },
+    "core:entity:event.voice_event": {
+      "kind": "entity",
+      "name": "event.voice_event",
+      "source": "core event.py:23",
+      "translation_key": "voice_event"
+    },
+    "core:entity:light.light": {
+      "kind": "entity",
+      "name": "light.light",
+      "source": "core light.py:25"
+    },
+    "core:entity:media_player.media": {
+      "kind": "entity",
+      "name": "media_player.media",
+      "source": "core media_player.py:61"
+    },
+    "core:entity:notify.announce": {
+      "kind": "entity",
+      "name": "notify.announce",
+      "source": "core notify.py:46",
+      "translation_key": "announce"
+    },
+    "core:entity:notify.speak": {
+      "kind": "entity",
+      "name": "notify.speak",
+      "source": "core notify.py:37",
+      "translation_key": "speak"
+    },
+    "core:entity:select.default_device": {
+      "kind": "entity",
+      "name": "select.default_device",
+      "source": "core select.py:45",
+      "translation_key": "default_device"
+    },
+    "core:entity:select.dropin": {
+      "kind": "entity",
+      "name": "select.dropin",
+      "source": "core select.py:31",
+      "translation_key": "dropin"
+    },
+    "core:entity:sensor.Air Quality": {
+      "kind": "entity",
+      "name": "sensor.Air Quality",
+      "source": "core sensor.py:118"
+    },
+    "core:entity:sensor.Alarm": {
+      "kind": "entity",
+      "name": "sensor.Alarm",
+      "source": "core sensor.py:125",
+      "translation_key": "alarm"
+    },
+    "core:entity:sensor.CO": {
+      "kind": "entity",
+      "name": "sensor.CO",
+      "source": "core sensor.py:106"
+    },
+    "core:entity:sensor.Humidity": {
+      "kind": "entity",
+      "name": "sensor.Humidity",
+      "source": "core sensor.py:88"
+    },
+    "core:entity:sensor.PM10": {
+      "kind": "entity",
+      "name": "sensor.PM10",
+      "source": "core sensor.py:94"
+    },
+    "core:entity:sensor.PM25": {
+      "kind": "entity",
+      "name": "sensor.PM25",
+      "source": "core sensor.py:100"
+    },
+    "core:entity:sensor.Reminder": {
+      "kind": "entity",
+      "name": "sensor.Reminder",
+      "source": "core sensor.py:130",
+      "translation_key": "reminder"
+    },
+    "core:entity:sensor.Timer": {
+      "kind": "entity",
+      "name": "sensor.Timer",
+      "source": "core sensor.py:135",
+      "translation_key": "timer"
+    },
+    "core:entity:sensor.VOC": {
+      "kind": "entity",
+      "name": "sensor.VOC",
+      "source": "core sensor.py:112",
+      "translation_key": "voc_index"
+    },
+    "core:entity:sensor.illuminance": {
+      "kind": "entity",
+      "name": "sensor.illuminance",
+      "source": "core sensor.py:82"
+    },
+    "core:entity:sensor.temperature": {
+      "kind": "entity",
+      "name": "sensor.temperature",
+      "source": "core sensor.py:71"
+    },
+    "core:entity:switch.announcements": {
+      "kind": "entity",
+      "name": "switch.announcements",
+      "source": "core switch.py:88",
+      "translation_key": "announcements"
+    },
+    "core:entity:switch.aqm_led": {
+      "kind": "entity",
+      "name": "switch.aqm_led",
+      "source": "core switch.py:118",
+      "translation_key": "aqm_led"
+    },
+    "core:entity:switch.communications": {
+      "kind": "entity",
+      "name": "switch.communications",
+      "source": "core switch.py:103",
+      "translation_key": "communications"
+    },
+    "core:entity:switch.dnd": {
+      "kind": "entity",
+      "name": "switch.dnd",
+      "source": "core switch.py:71",
+      "translation_key": "do_not_disturb"
+    },
+    "core:entity:todo.*": {
+      "kind": "entity",
+      "name": "todo.*",
+      "source": "core todo.py:76"
+    },
+    "core:entity:todo.*2": {
+      "kind": "entity",
+      "name": "todo.*2",
+      "source": "core todo.py:80"
+    },
+    "core:entity_key:event.voice_event": {
+      "kind": "entity_key",
+      "name": "event.voice_event",
+      "source": "core strings.json:63"
+    },
+    "core:entity_key:notify.announce": {
+      "kind": "entity_key",
+      "name": "notify.announce",
+      "source": "core strings.json:75"
+    },
+    "core:entity_key:notify.speak": {
+      "kind": "entity_key",
+      "name": "notify.speak",
+      "source": "core strings.json:78"
+    },
+    "core:entity_key:select.default_device": {
+      "kind": "entity_key",
+      "name": "select.default_device",
+      "source": "core strings.json:83"
+    },
+    "core:entity_key:select.dropin": {
+      "kind": "entity_key",
+      "name": "select.dropin",
+      "source": "core strings.json:86"
+    },
+    "core:entity_key:sensor.alarm": {
+      "kind": "entity_key",
+      "name": "sensor.alarm",
+      "source": "core strings.json:96"
+    },
+    "core:entity_key:sensor.reminder": {
+      "kind": "entity_key",
+      "name": "sensor.reminder",
+      "source": "core strings.json:99"
+    },
+    "core:entity_key:sensor.timer": {
+      "kind": "entity_key",
+      "name": "sensor.timer",
+      "source": "core strings.json:102"
+    },
+    "core:entity_key:sensor.voc_index": {
+      "kind": "entity_key",
+      "name": "sensor.voc_index",
+      "source": "core strings.json:105"
+    },
+    "core:entity_key:switch.announcements": {
+      "kind": "entity_key",
+      "name": "switch.announcements",
+      "source": "core strings.json:110"
+    },
+    "core:entity_key:switch.aqm_led": {
+      "kind": "entity_key",
+      "name": "switch.aqm_led",
+      "source": "core strings.json:113"
+    },
+    "core:entity_key:switch.communications": {
+      "kind": "entity_key",
+      "name": "switch.communications",
+      "source": "core strings.json:116"
+    },
+    "core:entity_key:switch.do_not_disturb": {
+      "kind": "entity_key",
+      "name": "switch.do_not_disturb",
+      "source": "core strings.json:119"
+    },
+    "core:entity_key:todo.shop": {
+      "kind": "entity_key",
+      "name": "todo.shop",
+      "source": "core strings.json:124"
+    },
+    "core:entity_key:todo.todo": {
+      "kind": "entity_key",
+      "name": "todo.todo",
+      "source": "core strings.json:123"
+    },
+    "core:event_attribute:intent": {
+      "kind": "event_attribute",
+      "name": "intent",
+      "source": "core event.py:108"
+    },
+    "core:event_attribute:person_first_name": {
+      "kind": "event_attribute",
+      "name": "person_first_name",
+      "source": "core event.py:108"
+    },
+    "core:event_attribute:person_type": {
+      "kind": "event_attribute",
+      "name": "person_type",
+      "source": "core event.py:108"
+    },
+    "core:event_attribute:voice_command": {
+      "kind": "event_attribute",
+      "name": "voice_command",
+      "source": "core event.py:108"
+    },
+    "core:event_attribute:voice_reply": {
+      "kind": "event_attribute",
+      "name": "voice_reply",
+      "source": "core event.py:108"
+    },
+    "core:event_type:triggered": {
+      "kind": "event_type",
+      "name": "triggered",
+      "source": "core event.py:71"
+    },
+    "core:feature:ColorMode.HS": {
+      "kind": "feature",
+      "name": "ColorMode.HS",
+      "source": "core light.py:58"
+    },
+    "core:feature:LightEntityFeature.EFFECT": {
+      "kind": "feature",
+      "name": "LightEntityFeature.EFFECT",
+      "source": "core light.py:83"
+    },
+    "core:feature:MediaPlayerEntityFeature.NEXT_TRACK": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.NEXT_TRACK",
+      "source": "core media_player.py:113"
+    },
+    "core:feature:MediaPlayerEntityFeature.PAUSE": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PAUSE",
+      "source": "core media_player.py:110"
+    },
+    "core:feature:MediaPlayerEntityFeature.PLAY": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PLAY",
+      "source": "core media_player.py:110"
+    },
+    "core:feature:MediaPlayerEntityFeature.PLAY_MEDIA": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PLAY_MEDIA",
+      "source": "core media_player.py:35"
+    },
+    "core:feature:MediaPlayerEntityFeature.PREVIOUS_TRACK": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.PREVIOUS_TRACK",
+      "source": "core media_player.py:116"
+    },
+    "core:feature:MediaPlayerEntityFeature.STOP": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.STOP",
+      "source": "core media_player.py:34"
+    },
+    "core:feature:MediaPlayerEntityFeature.VOLUME_MUTE": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.VOLUME_MUTE",
+      "source": "core media_player.py:33"
+    },
+    "core:feature:MediaPlayerEntityFeature.VOLUME_SET": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.VOLUME_SET",
+      "source": "core media_player.py:31"
+    },
+    "core:feature:MediaPlayerEntityFeature.VOLUME_STEP": {
+      "kind": "feature",
+      "name": "MediaPlayerEntityFeature.VOLUME_STEP",
+      "source": "core media_player.py:32"
+    },
+    "core:feature:NotifyEntityFeature.TITLE": {
+      "kind": "feature",
+      "name": "NotifyEntityFeature.TITLE",
+      "source": "core notify.py:50"
+    },
+    "core:feature:TodoListEntityFeature.CREATE_TODO_ITEM": {
+      "kind": "feature",
+      "name": "TodoListEntityFeature.CREATE_TODO_ITEM",
+      "source": "core todo.py:63"
+    },
+    "core:feature:TodoListEntityFeature.DELETE_TODO_ITEM": {
+      "kind": "feature",
+      "name": "TodoListEntityFeature.DELETE_TODO_ITEM",
+      "source": "core todo.py:65"
+    },
+    "core:feature:TodoListEntityFeature.UPDATE_TODO_ITEM": {
+      "kind": "feature",
+      "name": "TodoListEntityFeature.UPDATE_TODO_ITEM",
+      "source": "core todo.py:64"
+    },
+    "core:flow:reauth": {
+      "kind": "flow",
+      "name": "reauth",
+      "source": "core config_flow.py:160"
+    },
+    "core:flow:reconfigure": {
+      "kind": "flow",
+      "name": "reconfigure",
+      "source": "core config_flow.py:205"
+    },
+    "core:flow:user": {
+      "kind": "flow",
+      "name": "user",
+      "source": "core config_flow.py:102"
+    },
+    "core:option:code": {
+      "kind": "option",
+      "name": "code",
+      "source": "core strings.json:29",
+      "flows": [
+        "config.reauth_confirm",
+        "config.reconfigure",
+        "config.user"
+      ]
+    },
+    "core:option:password": {
+      "kind": "option",
+      "name": "password",
+      "source": "core strings.json:30",
+      "flows": [
+        "config.reauth_confirm",
+        "config.reconfigure",
+        "config.user"
+      ]
+    },
+    "core:option:username": {
+      "kind": "option",
+      "name": "username",
+      "source": "core strings.json:51",
+      "flows": [
+        "config.user"
+      ]
+    },
+    "core:platform:binary_sensor": {
+      "kind": "platform",
+      "name": "binary_sensor",
+      "source": "core binary_sensor.py:1"
+    },
+    "core:platform:button": {
+      "kind": "platform",
+      "name": "button",
+      "source": "core button.py:1"
+    },
+    "core:platform:event": {
+      "kind": "platform",
+      "name": "event",
+      "source": "core event.py:1"
+    },
+    "core:platform:light": {
+      "kind": "platform",
+      "name": "light",
+      "source": "core light.py:1"
+    },
+    "core:platform:media_player": {
+      "kind": "platform",
+      "name": "media_player",
+      "source": "core media_player.py:1"
+    },
+    "core:platform:notify": {
+      "kind": "platform",
+      "name": "notify",
+      "source": "core notify.py:1"
+    },
+    "core:platform:select": {
+      "kind": "platform",
+      "name": "select",
+      "source": "core select.py:1"
+    },
+    "core:platform:sensor": {
+      "kind": "platform",
+      "name": "sensor",
+      "source": "core sensor.py:1"
+    },
+    "core:platform:switch": {
+      "kind": "platform",
+      "name": "switch",
+      "source": "core switch.py:1"
+    },
+    "core:platform:todo": {
+      "kind": "platform",
+      "name": "todo",
+      "source": "core todo.py:1"
+    },
+    "core:play_media:*": {
+      "kind": "play_media",
+      "name": "*",
+      "source": "core media_player.py:226"
+    },
+    "core:push:FDAL_UPDATE": {
+      "kind": "push",
+      "name": "FDAL_UPDATE",
+      "source": "aio api.py:476"
+    },
+    "core:push:PUSH_AUDIO_PLAYER_STATE": {
+      "kind": "push",
+      "name": "PUSH_AUDIO_PLAYER_STATE",
+      "source": "aio api.py:470"
+    },
+    "core:push:PUSH_DND_STATE_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_DND_STATE_CHANGE",
+      "source": "aio api.py:474"
+    },
+    "core:push:PUSH_EQUALIZER_STATE_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_EQUALIZER_STATE_CHANGE",
+      "source": "aio api.py:468"
+    },
+    "core:push:PUSH_LIST_ITEM_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_LIST_ITEM_CHANGE",
+      "source": "aio api.py:472"
+    },
+    "core:push:PUSH_VOLUME_CHANGE": {
+      "kind": "push",
+      "name": "PUSH_VOLUME_CHANGE",
+      "source": "aio api.py:466"
+    },
+    "core:service:send_info_skill": {
+      "kind": "service",
+      "name": "send_info_skill",
+      "source": "core services.yaml:71"
+    },
+    "core:service:send_sound": {
+      "kind": "service",
+      "name": "send_sound",
+      "source": "core services.yaml:14"
+    },
+    "core:service:send_text_command": {
+      "kind": "service",
+      "name": "send_text_command",
+      "source": "core services.yaml:1"
+    },
+    "core:service_field:send_info_skill.device_id": {
+      "kind": "service_field",
+      "name": "send_info_skill.device_id",
+      "source": "core services.yaml:73"
+    },
+    "core:service_field:send_info_skill.info_skill": {
+      "kind": "service_field",
+      "name": "send_info_skill.info_skill",
+      "source": "core services.yaml:78",
+      "options": [
+        "calendar_next",
+        "calendar_today",
+        "calendar_tomorrow",
+        "cleanup",
+        "date",
+        "flash_briefing",
+        "fun_fact",
+        "good_morning",
+        "goodnight",
+        "im_home",
+        "national_news",
+        "sing_song",
+        "tell_joke",
+        "tell_story",
+        "time",
+        "traffic",
+        "weather"
+      ]
+    },
+    "core:service_field:send_sound.device_id": {
+      "kind": "service_field",
+      "name": "send_sound.device_id",
+      "source": "core services.yaml:16"
+    },
+    "core:service_field:send_sound.sound": {
+      "kind": "service_field",
+      "name": "send_sound.sound",
+      "source": "core services.yaml:21",
+      "options": [
+        "air_horn_03",
+        "amzn_sfx_cat_meow_1x_01",
+        "amzn_sfx_church_bell_1x_02",
+        "amzn_sfx_crowd_applause_01",
+        "amzn_sfx_dog_med_bark_1x_02",
+        "amzn_sfx_doorbell_01",
+        "amzn_sfx_doorbell_chime_01",
+        "amzn_sfx_doorbell_chime_02",
+        "amzn_sfx_large_crowd_cheer_01",
+        "amzn_sfx_lion_roar_02",
+        "amzn_sfx_rooster_crow_01",
+        "amzn_sfx_scifi_alarm_01",
+        "amzn_sfx_scifi_alarm_04",
+        "amzn_sfx_scifi_engines_on_02",
+        "amzn_sfx_scifi_sheilds_up_01",
+        "amzn_sfx_trumpet_bugle_04",
+        "amzn_sfx_wolf_howl_02",
+        "bell_02",
+        "boing_01",
+        "boing_03",
+        "buzzers_pistols_01",
+        "camera_01",
+        "christmas_05",
+        "clock_01",
+        "futuristic_10",
+        "halloween_bats",
+        "halloween_crows",
+        "halloween_footsteps",
+        "halloween_wind",
+        "halloween_wolf",
+        "holiday_halloween_ghost",
+        "horror_10",
+        "med_system_alerts_minimal_dragon_short",
+        "med_system_alerts_minimal_owl_short",
+        "med_system_alerts_minimals_blue_wave_small",
+        "med_system_alerts_minimals_galaxy_short",
+        "med_system_alerts_minimals_panda_short",
+        "med_system_alerts_minimals_tiger_short",
+        "med_ui_success_generic_1-1",
+        "squeaky_12",
+        "zap_01"
+      ]
+    },
+    "core:service_field:send_text_command.device_id": {
+      "kind": "service_field",
+      "name": "send_text_command.device_id",
+      "source": "core services.yaml:3"
+    },
+    "core:service_field:send_text_command.text_command": {
+      "kind": "service_field",
+      "name": "send_text_command.text_command",
+      "source": "core services.yaml:8"
+    }
+  },
+  "ignored": {
+    "amp:push:MATTER_SETUP_NOTIFICATION": "AMP __init__.py:2996",
+    "amp:push:PUSH_CONTENT_FOCUS_CHANGE": "AMP __init__.py:2983",
+    "amp:push:PUSH_DELETE_DOPPLER_ACTIVITIES": "AMP __init__.py:2969",
+    "amp:push:PUSH_DEVICE_SETUP_STATE_CHANGE": "AMP __init__.py:2983",
+    "amp:push:PUSH_LIST_CHANGE": "AMP __init__.py:2974",
+    "amp:push:PUSH_LIST_ITEM_CHANGE": "AMP __init__.py:2974",
+    "amp:push:PUSH_MEDIA_PREFERENCE_CHANGE": "AMP __init__.py:2990",
+    "amp:push:PUSH_TODO_CHANGE": "AMP __init__.py:2974"
+  }
+}

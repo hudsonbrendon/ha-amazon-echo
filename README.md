@@ -14,8 +14,9 @@ groups in Home Assistant, through
 [python-amazon-echo](https://github.com/hudsonbrendon/python-amazon-echo).
 It does everything the built-in **Alexa Devices** integration and **Alexa
 Media Player** do — [COMPARISON.md](COMPARISON.md) walks through both, feature
-by feature, with the line of their source where each one lives — and adds
-what neither has:
+by feature, with the line of their source where each one lives, and a test
+[checks the claim against their code](#how-the-superset-is-verified) — and
+adds what neither has:
 
 - **No password in Home Assistant.** Reuse the session Alexa Media Player
   already has, or sign in to Amazon in your own browser (passkeys, two-step
@@ -32,7 +33,9 @@ what neither has:
   ambient mode.
 - **Media player** with shuffle, repeat, forward/rewind, Bluetooth source
   selection and `play_media` for music, routines, sounds, skills, text
-  commands and TTS; **speak** and **announce** notify entities.
+  commands, TTS and audio files (a URL, local media or Home Assistant's own
+  text-to-speech, played as an announcement); **speak** and **announce**
+  notify entities.
 - **Alarms, timers and reminders**: next-occurrence sensors with the full
   list as attributes, plus actions to create and delete them.
 - Routines as buttons, Alexa lists as to-do entities, a voice command event
@@ -131,6 +134,7 @@ Home Assistant" under *Manage Your Content and Devices* on the Amazon site.
 | Receive changes by push | on | The HTTP/2 push channel. |
 | Probe devices on the local network | on | IP address, local reachability and Spotify user, every 60 s, without the cloud. |
 | Alexa smart-home devices | **off** | Lights, switches, sensors and locks for the smart-home devices linked to Alexa. See above for why it is off. |
+| Public address for audio files | empty | The HTTPS address Alexa reaches Home Assistant at, for [audio files played as announcements](#audio-files-as-announcements). Empty uses Home Assistant's external URL. |
 
 ## How data is updated
 
@@ -182,13 +186,18 @@ To-do list and your custom lists), and:
 The media player also carries `last_called`, `last_called_timestamp`,
 `last_called_summary`, `last_called_response`, `bluetooth_list`,
 `connected_bluetooth`, `previous_volume`, `last_message`,
-`last_message_type` and `locale` as attributes.
+`last_message_type`, `last_message_timestamp` and `locale` as attributes.
+The next alarm / timer / reminder sensors describe the next one (`label`,
+`sub_label`, `recurrence`, `status`), count them (`total_active`,
+`total_all`) and list them all (`items`).
 
 `media_player.play_media` content types:
 
 | `media_content_type` | `media_content_id` |
 | --- | --- |
-| `music` | `PROVIDER_ID:search phrase` (for example `SPOTIFY:lo-fi beats`) or just the phrase for your default provider |
+| `music` | `PROVIDER_ID:search phrase` (for example `SPOTIFY:lo-fi beats`) or just the phrase for your default provider. `extra: {timer: 600}` stops the music after that many seconds |
+| a provider id, such as `SPOTIFY` | the search phrase (the way the other two integrations take it) |
+| `music` or `audio`, with `announce: true` | an audio file: an `https://` address, a path of Home Assistant such as `/local/bell.mp3`, or a `media-source://` id (local media, text-to-speech). See below |
 | `routine` | routine name or id |
 | `sound` | sound id, for example `amzn_sfx_doorbell_chime_01` |
 | `skill` | skill id |
@@ -196,6 +205,37 @@ The media player also carries `last_called`, `last_called_timestamp`,
 | `tts` | text to speak (SSML is passed through, so `<audio src="https://…"/>` plays a file in a format Alexa accepts) |
 | `sequence` | a behavior node type such as `Alexa.Weather.Play`; `extra` becomes its payload |
 | `image` | https address of a picture to show as the background of an Echo Show |
+
+### Audio files as announcements
+
+Alexa cannot be handed a stream. What it can do is play a short MP3 from an
+HTTPS address in the middle of what it says, so an audio file is downloaded,
+converted with Home Assistant's ffmpeg (MP3, 48 kbit/s, 24 kHz), published
+under `/local/amazon_echo/` and spoken:
+
+```yaml
+action: media_player.play_media
+target:
+  entity_id: media_player.kitchen_echo
+data:
+  media_content_type: music
+  media_content_id: media-source://media_source/local/doorbell.wav
+  announce: true
+```
+
+`tts.speak` works the same way, so any text-to-speech engine of Home
+Assistant can talk through an Echo. It needs:
+
+- Home Assistant reachable from the internet over **HTTPS** (Home Assistant
+  Cloud, or your own external URL). A different address can be set in the
+  options. Without one the action fails with an error that says so.
+- The `ffmpeg` integration, which Home Assistant sets up by default.
+- A clip of at most 240 seconds: that is where Alexa stops.
+
+The converted files are named after their content, reused when the same
+sound is played again and deleted a day after their last use. Anyone who
+knows the address of a file can fetch it during that day, like everything
+else under `/local`.
 
 ## Actions
 
@@ -207,11 +247,11 @@ Every action takes `device_id`: an Echo, or the account device where noted.
 | `amazon_echo.play_sound` | `sound` | — |
 | `amazon_echo.run_routine` | `routine` (name or id); account device = the routine's own device | — |
 | `amazon_echo.launch_skill` | `skill_id` | — |
-| `amazon_echo.create_alarm` | `time`, `recurrence` (`DAILY`, `WEEKDAYS`, `WEEKENDS`, `WEEKLY`, `MO,WE,FR`) | the alarm |
+| `amazon_echo.create_alarm` | `time`, `recurrence` (`DAILY`, `WEEKDAYS`, `WEEKENDS`, `WEEKLY`, `MO,WE,FR`); for a music alarm `alarm_type: music`, `music_provider`, `music_entity` | the alarm |
 | `amazon_echo.create_timer` | `duration`, `label` | the timer |
 | `amazon_echo.create_reminder` | `time`, `label` | the reminder |
 | `amazon_echo.delete_notification` | `notification_id` | — |
-| `amazon_echo.get_notifications` | device or account | `notifications` |
+| `amazon_echo.get_notifications` | device or account | `notifications` (with `music_provider` and `music_entity` for music alarms) |
 | `amazon_echo.get_voice_history` | `limit`; device or account | `records` |
 | `amazon_echo.bluetooth_connect` | `address` (name or MAC of a paired device) | — |
 | `amazon_echo.bluetooth_disconnect` | | — |
@@ -293,6 +333,15 @@ that device.
 - Music with no provider prefix uses the provider id `DEFAULT`.
 - `create_timer` uses an endpoint inferred from the Alexa app and was not
   verified live. Alarms have no label on Amazon's side.
+- **Music alarms** can only reuse a station. Amazon has no public search for
+  one, so `create_alarm` with `alarm_type: music` looks for an existing music
+  alarm of the account with that `music_provider` and `music_entity` (create
+  it once in the Alexa app; `get_notifications` shows both values) and makes
+  a new alarm with the same station. This is how Alexa Media Player does it;
+  the request was not sent during development.
+- **Audio files as announcements** were tested with ffmpeg and the network
+  mocked, not against a real Echo. The music sleep timer (`extra.timer`) is
+  ported from Alexa Media Player and was not sent either.
 - Alarm and reminder times are read by Amazon in the Echo's own time zone;
   the integration assumes it is the time zone of Home Assistant.
 - A routine button runs the routine without a target device, so routines
@@ -343,6 +392,43 @@ uv venv --python 3.14 .venv && uv pip install --python .venv/bin/python -r requi
 
 Test fixtures are invented devices; nothing in this repository comes from a
 real account.
+
+### How the superset is verified
+
+"Everything the other two have" is checked by a test, not only written down.
+
+1. `scripts/extract_competitor_features.py` reads the source of Alexa Media
+   Player and of the core Alexa Devices integration (and the push handling of
+   their libraries) without importing or running any of it, and writes what
+   they offer to `tests/fixtures/competitor_features.json`: platforms,
+   entities, state attributes, actions and their fields, notify types,
+   events, feature flags, `play_media` types, options, config-flow entry
+   points, diagnostics and push commands, each with the file and line it was
+   found at. For the versions compared that is **198 features** of Alexa
+   Media Player and **104 features** of Alexa Devices.
+2. `tests/superset_map.json` says, for every one of them, what amazon_echo
+   has for it: an entity, an action (and field), a feature flag, an option,
+   an event, a push command or a named piece of code.
+3. `tests/test_superset.py` fails when a feature of the fixture has no entry
+   in the map, and when an entry points at something that is not there: an
+   entity must be in `strings.json` and in a description of its platform
+   file, an action in `services.yaml` and registered, a field in the action's
+   schema, an option in the options flow.
+
+Of the 302, 9 are marked not applicable — a stored password, a debug toggle,
+the settings of the other integration's own login proxy and command queue —
+each with its reason, and the test does not let that number grow. Six more
+are entities the core integration deletes itself.
+
+To check against newer versions of the other two, clone them and run:
+
+```bash
+python scripts/extract_competitor_features.py path/to/src-amp path/to/src-core
+.venv/bin/pytest tests/test_superset.py
+```
+
+(`src-amp` holds `alexa_media_player` and `alexapy`, `src-core` holds `core`
+and `aioamazondevices`.) Whatever is new shows up as a failing test.
 
 ## License
 

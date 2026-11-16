@@ -182,6 +182,8 @@ def notification_as_dict(notification: Notification) -> dict[str, Any]:
         "remaining": remaining.total_seconds() if remaining else None,
         "recurrence": notification.recurrence,
         "sound": notification.sound,
+        "music_provider": notification.raw.get("provider"),
+        "music_entity": notification.raw.get("musicEntity"),
     }
 
 
@@ -225,7 +227,8 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         # Device (serial) that routines without a device of their own run on.
         self.default_device: str | None = None
         # serial -> (kind, message, title) of the last speak/announce.
-        self.last_messages: dict[str, tuple[str, str, str | None]] = {}
+        # serial → (speak / announce, message, title, when it was sent)
+        self.last_messages: dict[str, tuple[str, str, str | None, str]] = {}
         self._smart_home = bool(entry.options.get(CONF_SMART_HOME, False))
         self._smart_home_fetched = False
         self._unsub_due: CALLBACK_TYPE | None = None
@@ -864,7 +867,12 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                 self.client.announce(devices, message, title=title, method=method)
             )
         for device in devices:
-            self.last_messages[device.serial] = (kind, message, title)
+            self.last_messages[device.serial] = (
+                kind,
+                message,
+                title,
+                dt_util.utcnow().isoformat(),
+            )
         self.async_update_listeners()
 
     async def set_kids_mode(self, device: Device, child_id: str | None) -> None:

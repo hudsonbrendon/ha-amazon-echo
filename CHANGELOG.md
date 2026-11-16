@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.3.0 - 2026-11-16
+
+Nothing is left in the "missing" list of [COMPARISON.md](COMPARISON.md), and
+the claim that this integration has everything Alexa Media Player and the
+core Alexa Devices integration have is now checked by a test. Requires
+`python-amazon-echo` 0.3.0.
+
+- **Audio files as announcements**: `media_player.play_media` with
+  `announce: true` takes an `https://` address, a path of Home Assistant or a
+  `media-source://` id (local media, Home Assistant's text-to-speech, so
+  `tts.speak` works on an Echo). The file is converted with Home Assistant's
+  ffmpeg to what Alexa plays (MP3, 48 kbit/s, 24 kHz), published under
+  `/local/amazon_echo/` and spoken. Needs Home Assistant reachable over
+  HTTPS; the new option **Public address for audio files** overrides the
+  external URL. Converted files are reused and deleted a day after their
+  last use. The media player advertises `MEDIA_ANNOUNCE`.
+- **Music alarms**: `amazon_echo.create_alarm` takes `alarm_type: music`,
+  `music_provider` and `music_entity`, and reuses the station of a music
+  alarm that already exists on the account. `get_notifications` returns
+  `music_provider` and `music_entity`.
+- `play_media`: a music provider id is accepted as the media type (the way
+  the other two integrations take it), and `extra: {timer: 600}` stops the
+  music after that many seconds.
+- Media player attribute `last_message_timestamp`. The next alarm / timer /
+  reminder sensors gain `label`, `sub_label`, `recurrence`, `status`,
+  `total_active` and `total_all` next to `items`.
+- **The superset is verified mechanically.**
+  `scripts/extract_competitor_features.py` takes an inventory of both
+  competitors from their source (198 features of Alexa Media Player, 104
+  features of Alexa Devices), `tests/superset_map.json` maps each one to an
+  entity, action, option, event or piece of code of this integration, and
+  `tests/test_superset.py` fails when one is unmapped or when a target does
+  not exist. The four items above other than the first two are what that
+  inventory turned up.
+
 ## 0.2.1 - 2026-11-16
 
 - Use `UnitOfDensity` / `UnitOfRatio` instead of the unit constants Home Assistant deprecated (removed in 2027.8).

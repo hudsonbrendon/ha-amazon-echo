@@ -78,15 +78,20 @@
           "scan_interval": "Polling interval",
           "enable_push": "Receive changes by push",
           "enable_local": "Probe devices on the local network",
-          "smart_home": "Alexa smart-home devices"
+          "smart_home": "Alexa smart-home devices",
+          "public_url": "Public address for audio files"
         },
         "data_description": {
           "scan_interval": "Only a fallback while push is connected. When push is down the account is polled every 60 seconds.",
           "enable_push": "Volume, playback, do not disturb, alarms and voice commands arrive as they happen. Not available while Alexa Media Player is set up and this account uses its imported session.",
           "enable_local": "IP address, local reachability and Spotify user, read from the device itself every 60 seconds.",
-          "smart_home": "Creates lights, switches, sensors and locks for the smart-home devices linked to your Alexa account. Leave it off if those devices are already in Home Assistant through their own integrations. Echo Glow and the Air Quality Monitor are always added."
+          "smart_home": "Creates lights, switches, sensors and locks for the smart-home devices linked to your Alexa account. Leave it off if those devices are already in Home Assistant through their own integrations. Echo Glow and the Air Quality Monitor are always added.",
+          "public_url": "The HTTPS address Alexa reaches Home Assistant at, used to play audio files as announcements. Leave it empty to use Home Assistant's external URL."
         }
       }
+    },
+    "error": {
+      "not_https": "The address must start with https://."
     }
   },
   "entity": {
@@ -413,6 +418,18 @@
         "recurrence": {
           "name": "Recurrence",
           "description": "Optional repetition: DAILY, WEEKDAYS, WEEKENDS, WEEKLY or a list of days such as MO,WE,FR."
+        },
+        "alarm_type": {
+          "name": "Alarm type",
+          "description": "The default sound, or music."
+        },
+        "music_provider": {
+          "name": "Music provider",
+          "description": "For a music alarm: the provider of a music alarm that already exists (music_provider in the response of amazon_echo.get_notifications)."
+        },
+        "music_entity": {
+          "name": "Station",
+          "description": "For a music alarm: the station, playlist or artist of a music alarm that already exists (music_entity in the response of amazon_echo.get_notifications)."
         }
       }
     },
@@ -717,6 +734,12 @@
         "speak": "Only speak",
         "show": "Only show"
       }
+    },
+    "alarm_type": {
+      "options": {
+        "default": "Default sound",
+        "music": "Music"
+      }
     }
   },
   "issues": {
@@ -779,6 +802,27 @@
     },
     "no_last_message": {
       "message": "Home Assistant has not sent a message to this device yet."
+    },
+    "announce_required": {
+      "message": "Alexa cannot stream an audio file, only play it as a short announcement. Call play_media with announce: true."
+    },
+    "no_public_url": {
+      "message": "Alexa needs an HTTPS address to fetch the audio from. Set Home Assistant's external URL, or the public address in the options of this integration."
+    },
+    "ffmpeg_unavailable": {
+      "message": "The ffmpeg integration of Home Assistant is not set up; it is needed to convert the audio."
+    },
+    "audio_download_failed": {
+      "message": "Could not read the audio file: {error}"
+    },
+    "transcode_failed": {
+      "message": "ffmpeg could not convert the audio file: {error}"
+    },
+    "no_music_alarm": {
+      "message": "No alarm of this account plays {music_entity} on {music_provider}. Create one in the Alexa app first: a new music alarm can only reuse the station of an existing one."
+    },
+    "music_alarm_fields": {
+      "message": "A music alarm needs alarm_type: music together with music_provider and music_entity."
     }
   }
 }

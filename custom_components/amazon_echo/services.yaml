@@ -66,6 +66,22 @@ create_alarm:
       example: DAILY
       selector:
         text:
+    alarm_type:
+      default: default
+      selector:
+        select:
+          translation_key: alarm_type
+          options:
+            - default
+            - music
+    music_provider:
+      example: TUNEIN
+      selector:
+        text:
+    music_entity:
+      example: Jazz Radio
+      selector:
+        text:
 
 create_timer:
   fields:

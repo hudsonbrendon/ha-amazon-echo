@@ -37,6 +37,7 @@ CONF_SCAN_INTERVAL: Final = "scan_interval"
 CONF_ENABLE_PUSH: Final = "enable_push"
 CONF_ENABLE_LOCAL: Final = "enable_local"
 CONF_SMART_HOME: Final = "smart_home"
+CONF_PUBLIC_URL: Final = "public_url"
 # Bridges that expose Home Assistant's own entities to Alexa (Matter hubs).
 # Importing what they publish would bring every entity back as a duplicate.
 HA_BRIDGE_MANUFACTURERS: Final = frozenset(
@@ -112,6 +113,9 @@ ATTR_SKILL: Final = "skill"
 ATTR_MESSAGE: Final = "message"
 ATTR_TITLE: Final = "title"
 ATTR_METHOD: Final = "method"
+ATTR_ALARM_TYPE: Final = "alarm_type"
+ATTR_MUSIC_PROVIDER: Final = "music_provider"
+ATTR_MUSIC_ENTITY: Final = "music_entity"
 
 SERVICE_SEND_TEXT_COMMAND: Final = "send_text_command"
 SERVICE_PLAY_SOUND: Final = "play_sound"

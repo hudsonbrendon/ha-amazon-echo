@@ -78,15 +78,20 @@
           "scan_interval": "Intervalo de consulta",
           "enable_push": "Receber mudanças por push",
           "enable_local": "Sondar os dispositivos na rede local",
-          "smart_home": "Dispositivos smart home da Alexa"
+          "smart_home": "Dispositivos smart home da Alexa",
+          "public_url": "Endereço público para arquivos de áudio"
         },
         "data_description": {
           "scan_interval": "Só uma reserva enquanto o push está conectado. Com o push fora do ar a conta é consultada a cada 60 segundos.",
           "enable_push": "Volume, reprodução, não perturbe, alarmes e comandos de voz chegam na hora em que acontecem. Não funciona enquanto o Alexa Media Player estiver configurado e esta conta usar a sessão importada dele.",
           "enable_local": "Endereço IP, alcance na rede local e usuário do Spotify, lidos do próprio dispositivo a cada 60 segundos.",
-          "smart_home": "Cria luzes, interruptores, sensores e fechaduras para os dispositivos smart home vinculados à sua conta Alexa. Deixe desligado se esses dispositivos já estão no Home Assistant pelas integrações deles. O Echo Glow e o monitor de qualidade do ar são sempre adicionados."
+          "smart_home": "Cria luzes, interruptores, sensores e fechaduras para os dispositivos smart home vinculados à sua conta Alexa. Deixe desligado se esses dispositivos já estão no Home Assistant pelas integrações deles. O Echo Glow e o monitor de qualidade do ar são sempre adicionados.",
+          "public_url": "O endereço HTTPS pelo qual a Alexa alcança o Home Assistant, usado para tocar arquivos de áudio como anúncio. Deixe vazio para usar a URL externa do Home Assistant."
         }
       }
+    },
+    "error": {
+      "not_https": "O endereço precisa começar com https://."
     }
   },
   "entity": {
@@ -413,6 +418,18 @@
         "recurrence": {
           "name": "Repetição",
           "description": "Repetição opcional: DAILY, WEEKDAYS, WEEKENDS, WEEKLY ou uma lista de dias como MO,WE,FR."
+        },
+        "alarm_type": {
+          "name": "Tipo de alarme",
+          "description": "O som padrão, ou música."
+        },
+        "music_provider": {
+          "name": "Provedor de música",
+          "description": "Para um alarme com música: o provedor de um alarme com música que já existe (music_provider na resposta de amazon_echo.get_notifications)."
+        },
+        "music_entity": {
+          "name": "Estação",
+          "description": "Para um alarme com música: a estação, playlist ou artista de um alarme com música que já existe (music_entity na resposta de amazon_echo.get_notifications)."
         }
       }
     },
@@ -717,6 +734,12 @@
         "speak": "Só falar",
         "show": "Só mostrar"
       }
+    },
+    "alarm_type": {
+      "options": {
+        "default": "Som padrão",
+        "music": "Música"
+      }
     }
   },
   "issues": {
@@ -779,6 +802,27 @@
     },
     "no_last_message": {
       "message": "O Home Assistant ainda não mandou nenhuma mensagem para este dispositivo."
+    },
+    "announce_required": {
+      "message": "A Alexa não transmite um arquivo de áudio, só o toca como um anúncio curto. Chame play_media com announce: true."
+    },
+    "no_public_url": {
+      "message": "A Alexa precisa de um endereço HTTPS para buscar o áudio. Configure a URL externa do Home Assistant ou o endereço público nas opções desta integração."
+    },
+    "ffmpeg_unavailable": {
+      "message": "A integração ffmpeg do Home Assistant não está configurada; ela é necessária para converter o áudio."
+    },
+    "audio_download_failed": {
+      "message": "Não foi possível ler o arquivo de áudio: {error}"
+    },
+    "transcode_failed": {
+      "message": "O ffmpeg não conseguiu converter o arquivo de áudio: {error}"
+    },
+    "no_music_alarm": {
+      "message": "Nenhum alarme desta conta toca {music_entity} no {music_provider}. Crie um no app Alexa primeiro: um novo alarme com música só reaproveita a estação de um que já existe."
+    },
+    "music_alarm_fields": {
+      "message": "Um alarme com música precisa de alarm_type: music junto com music_provider e music_entity."
     }
   }
 }

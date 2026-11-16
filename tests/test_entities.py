@@ -234,8 +234,27 @@ async def test_next_notification_sensors(
     ]
     assert state.attributes["items"][-1]["when"] is None
     assert state.attributes["items"][1]["label"] == "Soon"
+    # the next one, described
+    described = {k: v for k, v in state.attributes.items() if k != "items"}
+    assert described == {
+        "label": "Soon",
+        "sub_label": None,
+        "recurrence": None,
+        "status": "ON",
+        "total_active": 2,
+        "total_all": 5,
+        "device_class": "timestamp",
+        "friendly_name": "Kitchen Echo Next alarm",
+    }
     timer = hass.states.get("sensor.kitchen_echo_next_timer")
     assert [item["id"] for item in timer.attributes["items"]] == ["timer-1"]
+    assert (timer.attributes["label"], timer.attributes["total_active"]) == ("Pasta", 1)
+    reminder = hass.states.get("sensor.kitchen_echo_next_reminder").attributes
+    assert (reminder["label"], reminder["status"], reminder["total_all"]) == (
+        None,
+        None,
+        0,
+    )
     assert _state(hass, "sensor.kitchen_echo_next_reminder") == "unknown"
 
 
@@ -528,6 +547,14 @@ async def test_media_player_commands(
     [
         ("music", "SPOTIFY:lo-fi beats", "play_music", ("SPOTIFY", "lo-fi beats")),
         ("music", "jazz", "play_music", ("DEFAULT", "jazz")),
+        # The provider as the media type, as the other two integrations take it.
+        ("SPOTIFY", "lo-fi beats", "play_music", ("SPOTIFY", "lo-fi beats")),
+        (
+            "AMAZON_MUSIC",
+            "AC/DC: Thunder",
+            "play_music",
+            ("AMAZON_MUSIC", "AC/DC: Thunder"),
+        ),
         # An unknown prefix is part of the phrase, not a provider.
         (
             "music",
@@ -564,6 +591,33 @@ async def test_play_media(
     )
     call = getattr(mock_client, method).await_args
     assert call.args[0].serial == ECHO and call.args[1:] == args
+
+
+@pytest.mark.parametrize(
+    ("extra", "timer"),
+    [
+        ({"timer": 600}, 600),
+        ({"timer": "90"}, 90),
+        ({"timer": "soon"}, None),
+        ({}, None),
+    ],
+)
+async def test_play_media_music_with_a_sleep_timer(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    extra: dict[str, Any],
+    timer: int | None,
+) -> None:
+    await _call(
+        hass,
+        "media_player",
+        "play_media",
+        "media_player.kitchen_echo",
+        media_content_type="music",
+        media_content_id="SPOTIFY:jazz",
+        extra=extra,
+    )
+    assert mock_client.play_music.await_args.kwargs == {"timer": timer}
 
 
 async def test_play_media_routine_and_errors(

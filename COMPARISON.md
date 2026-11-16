@@ -7,22 +7,25 @@ one row per feature, built by reading the source of all three.
 | | Version read | Where the citations point |
 | --- | --- | --- |
 | **AMP** — Alexa Media Player (HACS) | 5.21.0, commit `b7b6c72` (2026-11-15) | `AMP file:line` = `custom_components/alexa_media/file`; `apy file:line` = its library `alexapy/file` (dev `7c4d3b0`) |
-| **Core** — Alexa Devices (Home Assistant core) | `dev` at `016643d` (2026-11) | `core file:line` = `homeassistant/components/alexa_devices/file`; `aio file:line` = its library `aioamazondevices` 17.2.12, `src/aioamazondevices/file` |
-| **amazon_echo** — this integration | 0.2.x | files in `custom_components/amazon_echo/`; an entity is named by its translation key, `entity.<platform>.<key>`, an action as `amazon_echo.<name>` |
+| **Core** — Alexa Devices (Home Assistant core) | `dev` at `016643d` (2026-11) | `core file:line` = `homeassistant/components/alexa_devices/file`; `aio file:line` = its library `aioamazondevices` 17.2.12 (commit `9f2a9fa`), `src/aioamazondevices/file` |
+| **amazon_echo** — this integration | 0.3.x | files in `custom_components/amazon_echo/`; an entity is named by its translation key, `entity.<platform>.<key>`, an action as `amazon_echo.<name>` |
 
 How to read it: a cell with a citation means the feature is there, at that
 line; "—" means it is not; plain words say how the same thing is reached
 another way. `tests/test_comparison.py` fails if this file
 names an entity key, an action or a source file of amazon_echo that does not
 exist, or if amazon_echo gains an entity key or an action that is not listed
-here — so the last column cannot drift from the code.
+here — so the last column cannot drift from the code. The other two columns
+are checked too: [How the superset is verified](#how-the-superset-is-verified)
+describes the inventory taken from the source of both competitors and the
+test that requires every item of it to exist in amazon_echo.
 
 The two lists that matter are at the end: [Only in amazon_echo](#only-in-amazon_echo)
 and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_echo).
 
 ## Authentication
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Sign in | Amazon's login page proxied through Home Assistant (`AMP config_flow.py:383`), device registration `apy alexalogin.py:1408` | e-mail and password typed into Home Assistant, Amazon's HTML forms scraped (`core config_flow.py:102`, `aio login.py:88`) | sign in to Amazon in your own browser and paste the final address, or reuse the AMP session: `config_flow.py` |
 | Password kept by Home Assistant | yes, in the config entry (`AMP config_flow.py:475`) | yes, in the config entry (`core config_flow.py:157`) | no: only the device registration (refresh token, cookies) |
@@ -35,7 +38,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Discovery
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Devices found on the network | — (`AMP manifest.json:8`, no discovery keys) | — (`core manifest.json:13`, discovery exempt) | zeroconf (`_spotify-connect` for Echos, `_amzn-wplay` for Fire TVs) and DHCP: `manifest.json`, `config_flow.py` |
 | Startup browse of the LAN | — | — | `coordinator.py` |
@@ -44,7 +47,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Local network
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | IP address of a device | — | — | `entity.sensor.ip_address` |
 | Reachability on the LAN, independent of the cloud | — | — | `entity.binary_sensor.local_reachable` |
@@ -54,7 +57,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## How data is updated
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Push channel (HTTP/2) | `apy alexahttp2.py:43` | `core __init__.py:83`, `aio implementation/http2.py:108` | `coordinator.py` |
 | Polling interval | 60 s, ×10 while push is up (`AMP const.py:87`) | 300 s fixed (`core coordinator.py:47`) | 300 s, 60 s while push is down, configurable: `coordinator.py` |
@@ -65,7 +68,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Push events handled
 
-| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | `PUSH_VOLUME_CHANGE` | `AMP __init__.py:2824` | `aio api.py:465` | applied in place: `coordinator.py` |
 | `PUSH_AUDIO_PLAYER_STATE` | `AMP __init__.py:2801` | `aio api.py:470` | state in place, metadata re-read |
@@ -87,7 +90,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Media player
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | One player per device | `AMP media_player.py:233` | `core media_player.py:73` | `media_player.py` |
 | Speaker groups as players | `AMP media_player.py:264` | speaker groups are devices (`aio const/devices.py:14`) | `media_player.py` (members and groups as attributes) |
@@ -98,7 +101,8 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 | Turn on, turn off | `AMP media_player.py:1720` | — | `media_player.py` |
 | Bluetooth source selection | `AMP media_player.py:1073` | — | `media_player.py` |
 | Title, artist, album, art, position | `AMP media_player.py:1168` | `core media_player.py:73` | `media_player.py`, plus the music provider |
-| `play_media`: music by provider and search phrase | `AMP media_player.py:1942` (any other type) | `core media_player.py:216` | `music`: `media_player.py` |
+| `play_media`: music by provider and search phrase | `AMP media_player.py:1942` (the provider is the type) | `core media_player.py:216` (the provider is the type) | `music` with `PROVIDER:phrase`, or the provider as the type: `media_player.py` |
+| `play_media`: music that stops after a while | `extra.timer` (`AMP media_player.py:2091`, `apy alexaapi.py:931`) | — | `extra.timer` |
 | `play_media`: routine | `AMP media_player.py:1983` | — | `routine` |
 | `play_media`: sound | `AMP media_player.py:2003` | — | `sound` |
 | `play_media`: skill | `AMP media_player.py:2027` | — | `skill` |
@@ -106,14 +110,15 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 | `play_media`: any sequence node type | `AMP media_player.py:1959` | — | `sequence` |
 | `play_media`: Echo Show background image | `AMP media_player.py:2047` | — | `image` |
 | `play_media`: speak a text | through notify | through notify | `tts` |
-| `play_media`: audio file as an announcement | `AMP media_player.py:1951` (downloads, transcodes with ffmpeg, serves from a public URL) | — | **no transcoding**, see the last section |
+| `play_media`: audio file as an announcement | `AMP media_player.py:1951` (downloads, transcodes with ffmpeg, serves from a public URL) | — | `music` or `audio` with `announce: true`; a URL, a path or a `media-source://` id (local media, text-to-speech): `audio.py` |
+| Announce flag advertised (`MEDIA_ANNOUNCE`) | — | — | `media_player.py` |
 | Attributes: last called, timestamp, summary, response | `AMP media_player.py:2129` | — | `last_called`, `last_called_timestamp`, `last_called_summary`, `last_called_response` |
 | Attributes: Bluetooth list and connected device | `AMP media_player.py:2122` | — | `bluetooth_list`, `connected_bluetooth` |
-| Attributes: previous volume, last message, locale | `AMP media_player.py:2127` | — | `previous_volume`, `last_message`, `last_message_type`, `locale` |
+| Attributes: previous volume, last message, locale | `AMP media_player.py:2127` | — | `previous_volume`, `last_message`, `last_message_type`, `last_message_timestamp`, `locale` |
 
 ### Notify
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Speak on a device | `AMP notify.py:301` (`type: tts`) | `core notify.py:38` | `entity.notify.speak` |
 | Announce with a chime and a title | `AMP notify.py:317` (`type: announce`) | `core notify.py:47` | `entity.notify.announce` |
@@ -126,7 +131,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Switch
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Do not disturb | `AMP switch.py:412` | `core switch.py:72` | `entity.switch.do_not_disturb` |
 | Announcements allowed | — | `core switch.py:89` | `entity.switch.announcements` |
@@ -146,7 +151,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Select
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Drop In: all / home / off | — | `core select.py:32` | `entity.select.drop_in` |
 | Default device for routines | — | `core select.py:46` | `entity.select.default_device` |
@@ -158,7 +163,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Number
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Alarm and timer volume | `AMP number.py:97` | — | `entity.number.alarm_volume` |
 | Echo Show display brightness | `AMP display.py:338` | — | `entity.number.display_brightness` |
@@ -167,11 +172,12 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Sensor
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Next alarm | `AMP sensor.py:1185` | `core sensor.py:127` | `entity.sensor.next_alarm` (all alarms as attributes) |
 | Next timer | `AMP sensor.py:1205` | `core sensor.py:137` | `entity.sensor.next_timer` |
 | Next reminder | `AMP sensor.py:1268` | `core sensor.py:132` | `entity.sensor.next_reminder` |
+| Attributes of the next alarm / timer / reminder | label, recurrence, status, counts, the whole list (`AMP sensor.py:1112`) | — | `label`, `sub_label`, `recurrence`, `status`, `total_active`, `total_all`, `items`: `sensor.py` |
 | Temperature | `AMP sensor.py:340` | `core sensor.py:72` | `entity.sensor.temperature` |
 | Illuminance | — | `core sensor.py:83` | `entity.sensor.illuminance` |
 | Humidity | `AMP sensor.py:464` (Air Quality Monitor) | `core sensor.py:89` | `entity.sensor.humidity` |
@@ -190,7 +196,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Binary sensor
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Online | availability of the player (`AMP media_player.py:1198`) | `core binary_sensor.py:39` | `entity.binary_sensor.online` |
 | Motion | — | `core binary_sensor.py:45` | `entity.binary_sensor.motion` |
@@ -201,7 +207,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Button, event, to-do
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Restart a device | `AMP button.py:90` | `core button.py:33` | `entity.button.reboot` |
 | One button per routine | — | `core button.py:78` | `entity.button.routine` |
@@ -211,7 +217,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Light, lock, alarm panel
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Echo Glow: on/off, brightness, colour, light shows | — | `core light.py:55` | `light.py` (always added) |
 | Lamps linked to Alexa: on/off, brightness | `AMP light.py:127` (Echo-hub devices only, opt-in) | — | `light.py` (opt-in) |
@@ -224,7 +230,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Actions
 
-| Action | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Action | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Send a text command | `play_media` `custom` (`AMP media_player.py:2058`) | `send_text_command` (`core services.py:119`) | `amazon_echo.send_text_command` |
 | Play a built-in sound | `play_media` `sound` (`AMP media_player.py:2003`) | `send_sound` (`core services.py:114`) | `amazon_echo.play_sound` |
@@ -235,10 +241,10 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 | Drop In notification | `notify` `type: dropin_notification` (`AMP notify.py:369`) | — | `amazon_echo.send_drop_in_notification` |
 | Announcement to several devices, speak / show | `notify` `type: announce` (`AMP notify.py:317`) | — | `amazon_echo.send_announcement` |
 | Create an alarm | `create_alarm` (`AMP services.py:741`) | — | `amazon_echo.create_alarm` |
-| Create a music alarm | `create_alarm` `alarm_type: music` (`AMP services.py:741`, reuses an existing music alarm) | — | **not implemented**, see the last section |
+| Create a music alarm | `create_alarm` `alarm_type: music` (`AMP services.py:741`, reuses an existing music alarm) | — | `amazon_echo.create_alarm` with `alarm_type: music`, `music_provider`, `music_entity` (reuses an existing music alarm) |
 | Create a timer | — | — | `amazon_echo.create_timer` |
 | Create a reminder | — | — | `amazon_echo.create_reminder` |
-| List alarms | `list_alarms` (`AMP services.py:801`, alarms only, no ids) | — | `amazon_echo.get_notifications` (alarms, timers, reminders, with ids) |
+| List alarms | `list_alarms` (`AMP services.py:801`, alarms only, no ids) | — | `amazon_echo.get_notifications` (alarms, timers, reminders, with ids, and the provider and station of music alarms) |
 | Enable an alarm | `enable_alarm` (`AMP services.py:831`) | — | `amazon_echo.enable_alarm` |
 | Disable an alarm | `disable_alarm` (`AMP services.py:866`) | — | `amazon_echo.disable_alarm` |
 | Skip the next ring of an alarm | `skip_next_alarm` (`AMP services.py:886`) | — | `amazon_echo.skip_next_alarm` |
@@ -255,7 +261,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Events on the bus
 
-| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | A voice command was heard | `alexa_media_voice_command` (`AMP __init__.py:2124`) | — | `amazon_echo_voice_command`: `coordinator.py` |
 | Another device became the last called | `alexa_media_last_called_event` (`AMP media_player.py:2280`) | — | `amazon_echo_last_called`: `coordinator.py` |
@@ -265,7 +271,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Options
 
-| Option | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Option | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Polling interval | `scan_interval` (`AMP const.py:72`) | — | `scan_interval`: `config_flow.py` |
 | Push on/off | — | — | `enable_push` |
@@ -273,12 +279,13 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 | Smart-home devices linked to Alexa | `extended_entity_discovery`, off by default (`AMP const.py:67`) | — | `smart_home`, off by default |
 | Include / exclude devices | `include_devices`, `exclude_devices` (`AMP const.py:63`) | — | Home Assistant's own "disable device", see the last section |
 | Delay to batch commands | `queue_delay` (`AMP const.py:65`) | fixed 0.3 s (`aio const/metadata.py:26`) | not needed: one request per command |
-| Public URL for audio files | `public_url` (`AMP const.py:66`) | — | goes with the transcoding, see the last section |
+| Public URL for audio files | `public_url` (`AMP const.py:66`) | — | `public_url` (empty: Home Assistant's external URL) |
+| Read the smart-home network | `should_get_network` (`AMP __init__.py:1185`) | — | part of `smart_home` |
 | Debug logging | `debug` (`AMP const.py:61`) | — | Home Assistant's own "enable debug logging" |
 
 ## Diagnostics
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
 | --- | --- | --- | --- |
 | Config entry diagnostics, redacted | `AMP diagnostics.py:357` | `core diagnostics.py:34` | `diagnostics.py` (devices under aliases, voice transcripts redacted) |
 | Device diagnostics | `AMP diagnostics.py:410` | `core diagnostics.py:55` | `diagnostics.py` |
@@ -327,23 +334,14 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## In a competitor but not in amazon_echo
 
-Missing, with the reason:
-
-- **Audio file played as an announcement** (Alexa Media Player's `play_media`
-  type `music` with `announce: true`, and its `public_url` option): Alexa
-  Media Player downloads the file, transcodes it with ffmpeg into
-  `/config/www` and makes Alexa speak an `<audio>` tag pointing at Home
-  Assistant's public URL. The download, transcode and public-URL plumbing is
-  not implemented. What is: `entity.notify.speak` and the `tts` media type
-  pass SSML through, so `<audio src="https://…"/>` plays a file that is
-  already in a format Alexa accepts and reachable from the internet.
-- **Music alarms** (`create_alarm` with `alarm_type: music`): Alexa Media
-  Player marks it experimental and can only reuse the station of a music
-  alarm that already exists on the device. Existing music alarms are listed,
-  enabled, disabled, skipped and deleted here like any other alarm.
+Missing: nothing. The two features that were listed here until 0.2 — an
+audio file played as an announcement, and music alarms — are in the tables
+above. `tests/test_superset.py` keeps it that way: see
+[How the superset is verified](#how-the-superset-is-verified).
 
 Same capability on a different surface (nothing is missing, it is just not a
-separate entity, action or option):
+separate entity, action or option; `tests/superset_map.json` maps each one
+to the thing named here):
 
 - **Shuffle and repeat switches**: `media_player.shuffle_set` and
   `media_player.repeat_set` on the media player, which is where Home
@@ -358,15 +356,35 @@ separate entity, action or option):
   `amazon_echo.send_drop_in_notification`).
 - **`history_records` attribute**: the response of
   `amazon_echo.get_voice_history`, so the transcripts are not written to the
-  recorder.
+  recorder. **`available` attribute**: `entity.binary_sensor.online`.
+- **`dismissed` attribute of the next alarm sensor**: the
+  `amazon_echo_alarm_dismissed` event. **`sorted_active`, `sorted_all`,
+  `brief`**: the `items` attribute.
 - **`force_logout` action, relogin events**: *Reconfigure* replaces the
   session at any time, and a rejected session starts Home Assistant's own
   reauthentication (with its notification and repair).
 - **`enable_network_discovery` action**: the endpoint list is read on every
   poll, there is nothing to re-arm.
-- **`include_devices` / `exclude_devices`, `debug`, `queue_delay` options**:
-  a device is disabled from its page in Home Assistant, debug logging is
-  enabled from the integration's menu, and commands are sent one by one.
+- **`include_devices` / `exclude_devices` options**: every device is in the
+  device registry, where it is disabled from its page in Home Assistant.
+- **E-mail, security code, one-time-password key, Amazon domain**: the
+  sign-in is done in your own browser, with whatever Amazon asks there.
+
+Not capabilities (the 9 entries of the map marked `not_applicable`):
+
+- **The Amazon password** stored by both competitors: amazon_echo keeps only
+  the device registration it gets from the sign-in.
+- **`debug` option**: debug logging is enabled from the integration's menu.
+- **`queue_delay` option**: tunes how long Alexa Media Player waits to batch
+  commands; amazon_echo sends each command in a request of its own.
+- **`hass_url` option and the `proxy_warning` step**: the address of Home
+  Assistant for Alexa Media Player's login proxy, and the warning that it is
+  unreachable. There is no proxy here.
+- **Setup from the YAML configuration file**: Alexa Media Player reports
+  it as deprecated itself.
+- **`prior_value` and `process_timestamp` attributes** of the next alarm
+  sensor: Home Assistant gives every trigger the previous state and records
+  when a state was last updated.
 
 Not offered by anyone any more:
 
@@ -374,5 +392,93 @@ Not offered by anyone any more:
   library and is not used by the integration; its endpoint
   (`/api/activities`) answers 404 since Amazon moved the history to the
   privacy hub.
-- **Sound-detection binary sensors** (baby cry, dog bark…): the core
-  integration removes them itself (`core binary_sensor.py:62`).
+- **Sound-detection and Bluetooth binary sensors** (baby cry, dog bark…): the
+  core integration removes them itself (`core binary_sensor.py:62`).
+
+## How the superset is verified
+
+The tables above were written by reading the three code bases. This is the
+part that does not rely on reading:
+
+1. **An inventory taken from the competitors' source.**
+   `scripts/extract_competitor_features.py` parses the two integrations (and
+   the push handling of their libraries) with `ast` and `json`; nothing of
+   them is imported or run. It writes
+   `tests/fixtures/competitor_features.json`: one entry per feature, with the
+   file and line it was found at and the commits it was taken from.
+2. **A map.** `tests/superset_map.json` gives, for every entry of the
+   inventory, what amazon_echo has for it.
+3. **A test.** `tests/test_superset.py` fails if an entry of the inventory
+   has no line in the map, and if a line of the map points at something that
+   is not in the code of amazon_echo.
+
+What the inventory holds for the versions compared here — 198 features of
+Alexa Media Player and 104 features of Alexa Devices:
+
+| Kind | What is collected | AMP | Core |
+| --- | --- | --- | --- |
+| `platform` | every platform file | 10 | 10 |
+| `entity` | entity classes (AMP), entity description keys (core) | 22 | 34 |
+| `entity_key` | entity translation keys of `strings.json` | 18 | 15 |
+| `sensor_type` | air quality sensor types | 6 | 0 |
+| `attribute` | state attributes an entity builds | 27 | 0 |
+| `service` | actions: `services.yaml` and the registrations | 14 | 3 |
+| `service_field` | fields of each action, from `services.yaml` and the schema | 25 | 6 |
+| `notify_type` | `data.type` values of the notify service | 4 | 0 |
+| `notify_data` | other `data` keys of the notify service | 2 | 0 |
+| `notify_target` | special notify targets | 1 | 0 |
+| `event` | events fired on the bus | 6 | 0 |
+| `event_type` | types of event entities | 0 | 1 |
+| `event_attribute` | data of event entities | 0 | 5 |
+| `feature` | feature flags and colour modes (`MediaPlayerEntityFeature.SEEK`…) | 19 | 15 |
+| `play_media` | content types `play_media` handles (`*`: the type is the music provider) | 8 | 1 |
+| `play_media_option` | options `play_media` reads | 2 | 0 |
+| `option` | fields of the config and options flows | 17 | 3 |
+| `flow` | config flow entry points (user, reauth, reconfigure, import, options) | 4 | 3 |
+| `diagnostics` | config entry and device diagnostics | 2 | 2 |
+| `push` | push commands with a handler that does more than log them | 11 | 6 |
+| | **total** | **198** | **104** |
+
+What each of them is mapped to, and what the test demands of the target:
+
+| Target | The test requires | AMP | Core |
+| --- | --- | --- | --- |
+| `entity` | an entity: its key is in `strings.json` and in a description of the platform file | 49 | 41 |
+| `action` | an action (and field): in `services.yaml`, registered in `services.py`, the field in its schema | 34 | 9 |
+| `media_feature` | a flag in the supported features of the media player | 18 | 9 |
+| `entity_feature` | a feature flag or colour mode another platform uses | 5 | 6 |
+| `play_media_type` | a content type `play_media` compares against | 6 | 0 |
+| `option` | a key of the options flow schema, labelled in `strings.json` | 4 | 0 |
+| `event` | an event the integration fires on the bus | 5 | 0 |
+| `push` | a command the push handler acts on | 11 | 6 |
+| `attribute` | a state attribute the platform file builds | 22 | 5 |
+| `code` | a named function, class or constant of a named file: the setup of a platform, an entity that has no translation key, the different-surface cases | 36 | 21 |
+| `removed` | nothing: the competitor deletes the entity itself | 0 | 6 |
+| `not_applicable` | nothing: not a capability, with the reason | 8 | 1 |
+| | **total** | **198** | **104** |
+
+Of the 302 features, 9 are marked not applicable (listed in the previous
+section); the test has that number as a ceiling, prints the list when it is
+exceeded and demands a reason for each. A feature may be marked `removed`
+only if the inventory itself found it in a table the competitor calls
+deprecated. Push commands a competitor names only to log them (8 in Alexa
+Media Player) are kept apart in the fixture and need no mapping.
+
+What it does not do: it cannot tell whether two features that are mapped to
+each other behave the same; that is what the tables above, the unit tests
+and the citations are for. And it is an inventory of what can be found by
+parsing: platforms, entities, attributes, actions, fields, notify types,
+events, feature flags, `play_media` types, options, flow entry points,
+diagnostics and push commands. Behaviour that has no such handle (how fast a
+poll is, how a login page is proxied) is compared by hand, above.
+
+To check against newer versions of the other two, clone them side by side
+with their libraries and run:
+
+```bash
+python scripts/extract_competitor_features.py path/to/src-amp path/to/src-core
+pytest tests/test_superset.py
+```
+
+Whatever they added shows up as a failing test until it is implemented and
+mapped.

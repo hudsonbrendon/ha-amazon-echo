@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-from amazon_echo import AmazonEchoError, VoiceRecord
+from amazon_echo import AmazonEchoError, Notification, VoiceRecord
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr
@@ -126,7 +126,10 @@ async def test_create_and_delete_notifications(
     # A naive time is local time.
     assert when == dt_util.as_local(dt_util.parse_datetime("2030-01-02 07:00:00"))
     assert when.tzinfo is not None
-    assert mock_client.create_alarm.await_args.kwargs == {"recurrence": "DAILY"}
+    assert mock_client.create_alarm.await_args.kwargs == {
+        "recurrence": "DAILY",
+        "music": None,
+    }
     assert response["id"] == "alarm-late" and response["kind"] == "alarm"
 
     # A recurrence the library does not understand is a validation error.
@@ -149,6 +152,63 @@ async def test_create_and_delete_notifications(
     with pytest.raises(ServiceValidationError) as err:
         await _call(hass, "delete_notification", notification_id="missing")
     assert err.value.translation_key == "notification_not_found"
+
+
+async def test_create_music_alarm(
+    hass: HomeAssistant, mock_client: MagicMock, mock_config_entry: MockConfigEntry
+) -> None:
+    """A music alarm reuses the station of one made in the Alexa app."""
+    music = {
+        "alarm_type": "music",
+        "music_provider": " tunein",
+        "music_entity": "JAZZ radio ",
+    }
+    with pytest.raises(ServiceValidationError) as err:
+        await _call(hass, "create_alarm", time="2030-01-02 07:00:00", **music)
+    assert err.value.translation_key == "no_music_alarm"
+    assert err.value.translation_placeholders == {
+        "music_provider": " tunein",
+        "music_entity": "JAZZ radio ",
+    }
+
+    # An alarm with that station exists on another device of the account.
+    existing = Notification(
+        id="music-alarm",
+        kind="music_alarm",
+        status="OFF",
+        device_serial=SHOW,
+        device_type="TYPESHOW",
+        raw={
+            "musicAlarmId": "00000000-0000-0000-0000-00000000000a",
+            "provider": "TuneIn",
+            "musicEntity": "Jazz Radio",
+        },
+    )
+    mock_client.get_notifications.return_value = [
+        *mock_client.get_notifications.return_value,
+        existing,
+    ]
+    await mock_config_entry.runtime_data.async_refresh()
+    await _call(hass, "create_alarm", time="2030-01-02 07:00:00", **music)
+    assert mock_client.create_alarm.await_args.args[0].serial == ECHO
+    assert mock_client.create_alarm.await_args.kwargs["music"] is existing
+    listed = (await _call(hass, "get_notifications", SHOW))["notifications"]
+    assert [(n["music_provider"], n["music_entity"]) for n in listed] == [
+        ("TuneIn", "Jazz Radio")
+    ]
+
+    # The three fields go together.
+    mock_client.create_alarm.reset_mock()
+    for fields in (
+        {"alarm_type": "music"},
+        {"alarm_type": "music", "music_provider": "TuneIn"},
+        {"music_provider": "TuneIn", "music_entity": "Jazz Radio"},
+        {"music_entity": "Jazz Radio"},
+    ):
+        with pytest.raises(ServiceValidationError) as err:
+            await _call(hass, "create_alarm", time="2030-01-02 07:00:00", **fields)
+        assert err.value.translation_key == "music_alarm_fields"
+    mock_client.create_alarm.assert_not_awaited()
 
 
 async def test_get_notifications(hass: HomeAssistant) -> None:

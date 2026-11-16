@@ -70,7 +70,7 @@ def test_named_source_files_exist() -> None:
 
 def test_document_shape() -> None:
     """Three products per table, competitor claims cited, both closing lists."""
-    header = "| AMP 5.21.0 | Core alexa_devices | amazon_echo 0.2 |"
+    header = "| AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |"
     assert COMPARISON.count(header) >= 15
     for section in (
         "## Authentication",
@@ -84,6 +84,7 @@ def test_document_shape() -> None:
         "## Diagnostics",
         "## Only in amazon_echo",
         "## In a competitor but not in amazon_echo",
+        "## How the superset is verified",
     ):
         assert f"\n{section}\n" in COMPARISON, section
     assert len(CITATION.findall(COMPARISON)) > 150
