@@ -369,10 +369,9 @@ that device.
   most countries.
 - **Smart-home devices**: the state is what Amazon last heard from the
   device's own cloud, so it can lag; without push it is corrected by the next
-  poll. The payload of `setColorTemperature` is inferred, colour temperature
-  is offered from 2200 K to 6500 K. Power and brightness were verified live on a Tuya lamp
-  linked to Alexa; colour, colour temperature, mode and lock operations were not
-  sent to a real device.
+  poll. Colour temperature is offered from 2200 K to 6500 K. Power,
+  brightness, colour, colour temperature and mode were verified live on Tuya
+  lamps linked to Alexa; locking and unlocking were not sent to a real lock.
 - **Amazon Kids**: reading the profiles and the device state was verified;
   switching a device was not. A new child profile is noticed within three
   hours.
