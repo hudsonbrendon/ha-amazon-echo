@@ -487,8 +487,8 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
 
     def _device_id(self, serial: str | None) -> str | None:
         """Home Assistant device id of an Amazon serial number."""
-        entry = dr.async_get(self.hass).async_get_device(
-            identifiers={(DOMAIN, serial or "")}
+        entry = dr.async_get(self.hass).async_get_device_by_identifier(
+            (DOMAIN, serial or ""), self.config_entry.entry_id
         )
         return entry.id if entry else None
 

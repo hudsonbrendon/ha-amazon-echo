@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2 - 2026-11-16
+
+- Use `async_get_device_by_identifier` instead of the device-registry lookup Home Assistant deprecated.
+
 ## 0.3.1 - 2026-11-16
 
 - Slow boots: the entry no longer waits for Alexa Media Player to finish its own setup, and an entry whose setup Home Assistant cancelled at a bootstrap timeout is reloaded once startup is over.
