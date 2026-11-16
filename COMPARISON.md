@@ -242,7 +242,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 | Announcement to several devices, speak / show | `notify` `type: announce` (`AMP notify.py:317`) | — | `amazon_echo.send_announcement` |
 | Create an alarm | `create_alarm` (`AMP services.py:741`) | — | `amazon_echo.create_alarm` |
 | Create a music alarm | `create_alarm` `alarm_type: music` (`AMP services.py:741`, reuses an existing music alarm) | — | `amazon_echo.create_alarm` with `alarm_type: music`, `music_provider`, `music_entity` (reuses an existing music alarm) |
-| Create a timer | — | — | `amazon_echo.create_timer` |
+| Create a timer | — | — | `amazon_echo.create_timer` (a typed request; Alexa confirms it out loud) |
 | Create a reminder | — | — | `amazon_echo.create_reminder` |
 | List alarms | `list_alarms` (`AMP services.py:801`, alarms only, no ids) | — | `amazon_echo.get_notifications` (alarms, timers, reminders, with ids, and the provider and station of music alarms) |
 | Enable an alarm | `enable_alarm` (`AMP services.py:831`) | — | `amazon_echo.enable_alarm` |

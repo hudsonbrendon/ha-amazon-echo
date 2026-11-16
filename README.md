@@ -248,7 +248,7 @@ Every action takes `device_id`: an Echo, or the account device where noted.
 | `amazon_echo.run_routine` | `routine` (name or id); account device = the routine's own device | — |
 | `amazon_echo.launch_skill` | `skill_id` | — |
 | `amazon_echo.create_alarm` | `time`, `recurrence` (`DAILY`, `WEEKDAYS`, `WEEKENDS`, `WEEKLY`, `MO,WE,FR`); for a music alarm `alarm_type: music`, `music_provider`, `music_entity` | the alarm |
-| `amazon_echo.create_timer` | `duration`, `label` | the timer |
+| `amazon_echo.create_timer` | `duration`, `label` | the timer (Alexa confirms it out loud) |
 | `amazon_echo.create_reminder` | `time`, `label` | the reminder |
 | `amazon_echo.delete_notification` | `notification_id` | — |
 | `amazon_echo.get_notifications` | device or account | `notifications` (with `music_provider` and `music_entity` for music alarms) |
@@ -331,8 +331,10 @@ that device.
 - **Ambient mode** (Fire TV) is written through the generic endpoint feature
   call and was not verified on a real device.
 - Music with no provider prefix uses the provider id `DEFAULT`.
-- `create_timer` uses an endpoint inferred from the Alexa app and was not
-  verified live. Alarms have no label on Amazon's side.
+- `create_timer` is spoken: Amazon has no API to start a timer on an Echo, so the
+  integration types the request with the duration in words and Alexa confirms it
+  out loud. It works on devices set to Portuguese or English (verified live in
+  pt-BR); other languages get a translated error.
 - **Music alarms** can only reuse a station. Amazon has no public search for
   one, so `create_alarm` with `alarm_type: music` looks for an existing music
   alarm of the account with that `music_provider` and `music_entity` (create

@@ -319,3 +319,38 @@ async def test_device_resolution_errors(
             DOMAIN, "play_sound", {"device_id": device_id, "sound": "x"}, blocking=True
         )
     assert err.value.translation_key == "entry_not_loaded"
+
+
+async def test_typed_requests_refresh_the_voice_history(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """Amazon pushes nothing for typed requests, so the history is read again."""
+    from datetime import timedelta
+    from unittest.mock import patch
+
+    from homeassistant.util import dt as dt_util
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+
+    device = next(
+        entry
+        for entry in dr.async_entries_for_config_entry(
+            dr.async_get(hass), mock_config_entry.entry_id
+        )
+        if (DOMAIN, ECHO) in entry.identifiers
+    )
+    mock_client.get_voice_history.reset_mock()
+    with patch("custom_components.amazon_echo.coordinator.VOICE_AFTER_TEXT_SECONDS", 1):
+        await hass.services.async_call(
+            DOMAIN,
+            "send_text_command",
+            {"device_id": device.id, "text": "what time is it"},
+            blocking=True,
+        )
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=2))
+        await hass.async_block_till_done(wait_background_tasks=True)
+    mock_client.text_command.assert_awaited_once()
+    assert mock_client.get_voice_history.await_count >= 1

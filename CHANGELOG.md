@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.4 - 2026-11-16
+
+- `create_timer` now starts the timer on the Echo (it was started on the integration's own app registration). Alexa confirms it out loud; Portuguese and English devices only. Requires `python-amazon-echo` 0.3.1.
+- The voice event and the last called device follow typed requests (`send_text_command`, `create_timer`), for which Amazon pushes nothing.
+- The last called device is read again by the slow tier when the startup read failed.
+
 ## 0.3.3 - 2026-11-16
 
 - A slow-tier fetch that fails (lists, device settings, communication preferences) is tried again after 5 minutes, up to three times, instead of waiting for the next 3-hour cycle.

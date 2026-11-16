@@ -86,6 +86,7 @@ WRITE_SETTLE_SECONDS = 1.0
 PUSH_DEBOUNCE_SECONDS = 2.0
 SLOW_CONCURRENCY = 4
 FAST_TIMEOUT_SECONDS = 90
+VOICE_AFTER_TEXT_SECONDS = 6
 SLOW_RETRY_SECONDS = 300
 SLOW_RETRY_LIMIT = 3
 LAST_CALLED_LOOKBACK = timedelta(days=7)
@@ -437,6 +438,10 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         if self.last_update_success:
             try:
                 await self._async_update_slow(self.data)
+                if self.data.last_called is None:
+                    # the startup read failed: without it nothing shows until
+                    # someone talks to Alexa again
+                    await self._async_fetch_voice(seed=True)
             except AmazonEchoAuthenticationError:
                 self.config_entry.async_start_reauth(self.hass)
                 return
@@ -690,6 +695,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         except AmazonEchoAuthenticationError:
             raise
         except AmazonEchoError as err:
+            self._fetch_failed = True
             LOGGER.debug("Could not fetch the voice history: %s", err)
             return
         for record in sorted(records, key=lambda r: r.timestamp):
@@ -705,6 +711,24 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             self.hass.bus.async_fire(BUS_VOICE_COMMAND, self._voice_event(record))
             if previous is None or previous.device_serial != record.device_serial:
                 self.hass.bus.async_fire(BUS_LAST_CALLED, self._voice_event(record))
+
+    @callback
+    def async_schedule_voice_refresh(self) -> None:
+        """Read the voice history shortly after a typed request.
+
+        Amazon pushes nothing for requests that were typed instead of spoken,
+        so the voice event and the last called device would miss them.
+        """
+
+        @callback
+        def refresh(_now: datetime) -> None:
+            self.config_entry.async_create_background_task(
+                self.hass, self.async_update_last_called(), f"{DOMAIN}_voice"
+            )
+
+        self.config_entry.async_on_unload(
+            async_call_later(self.hass, VOICE_AFTER_TEXT_SECONDS, refresh)
+        )
 
     async def async_update_last_called(self, *, seed: bool = False) -> None:
         """Read the voice history now (action, startup)."""

@@ -270,6 +270,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
     async def send_text_command(call: ServiceCall) -> None:
         c, device = _resolve_device(hass, call)
         await c.async_write(c.client.text_command(device, call.data[ATTR_TEXT]))
+        c.async_schedule_voice_refresh()
 
     async def play_sound(call: ServiceCall) -> None:
         c, device = _resolve_device(hass, call)
@@ -306,6 +307,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
             ),
             refresh="notifications",
         )
+        c.async_schedule_voice_refresh()  # a timer is a typed request too
         return notification_as_dict(created) if call.return_response else None
 
     async def create_reminder(call: ServiceCall) -> ServiceResponse:
