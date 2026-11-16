@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8 - 2026-11-16
+
+- Deleting an entry signed in through the browser also removes its registration from the Amazon account (`auth/deregister`). Neither Alexa Media Player nor the core integration does this, so their registrations pile up under *Manage Your Content and Devices*. Imported Alexa Media Player sessions are left alone. Requires `python-amazon-echo` 0.3.5.
+
 ## 0.3.7 - 2026-11-16
 
 - The Fire TV ambient mode switch is created again: Amazon lists the feature but never reports its state, so the switch shows the last value it sent (assumed state). Verified live. Requires `python-amazon-echo` 0.3.4.
