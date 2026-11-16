@@ -181,3 +181,29 @@ Other things the firmware shows:
 - **The SOCKS5 service on port 1080 is not an open proxy.** `init.socks.rc` starts `/system/bin/socks -i p2p0 -p 1080`: it is meant for the Wi-Fi Direct interface and, unless started with `-w`, checks both the client's device id and the requested host against a whitelist ("client's deviceID is not in whitelist", "client's requested remote host is not in whitelist"). The no-auth greeting observed in §2 is accepted before that check. (Strings only; the whitelist check was not exercised.)
 - Local voice handling exists on the device (`AlexaHybridExecutionControllerLitespeed`, skills for alerts, timers, stop and volume), driven by the device's own microphone — there is no network entry point to it in the init services.
 - `SmartHomed`, `gadgetsd`, `puffinmrmd` and Sidewalk services are present; none registers a LAN API beyond what §2 lists.
+
+### 7.3 Decompiled, not only strings
+
+Two functions of the Echo Dot's `libamazonwha.so` were decompiled with REA/Ghidra (procedure search `ev_0d89f64a…`):
+
+`Whad::HttpServer::configureSSLContext` at `0x43530c` (`ev_01d012c3…`):
+
+```c
+SSL_CTX_set_options(ctx, 0x16000000);
+SSL_CTX_set_tmp_ecdh(ctx, Whad::CryptoKeyUtil::newECKey());
+SSL_CTX_set_cipher_list(ctx, Whad::CryptoKeyUtil::supportedCiphers());
+SSL_CTX_use_certificate(ctx, cert);      // the device's own control-plane certificate
+SSL_CTX_use_PrivateKey(ctx, key);
+SSL_CTX_set_verify(ctx, 3, callback);    // 3 = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+SSL_CTX_set_session_cache_mode(ctx, 0);
+```
+
+Verify mode 3 is the code-level reason the handshake on port 55443 fails without a client certificate (observed on all seven Echos in §7.1).
+
+`Whad::DeviceClusterManager::certVerifyCallback` at `0x401950` (`ev_795869c3…`): when OpenSSL reports a failed verification (`preverify_ok == 0`) it reads the
+peer certificate's serial number, the error and the depth and hands them to a reporting method; it never turns a failure into an acceptance. A peer is
+therefore trusted only if its certificate is in the store filled by `installTrustedClientCertificate`, which was decompiled too
+(`0x4352a4`, `ev_11f0d083…`): it is exactly `X509_STORE_add_cert(SSL_CTX_get_cert_store(ctx), peer_certificate)`.
+
+Static analysis only: the firmware was not executed (it is an ARM Android userland with hardware dependencies); behaviour on the live devices was
+checked from the network side in §7.1.
