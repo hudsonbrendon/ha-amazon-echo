@@ -25,7 +25,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Authentication
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Sign in | Amazon's login page proxied through Home Assistant (`AMP config_flow.py:383`), device registration `apy alexalogin.py:1408` | e-mail and password typed into Home Assistant, Amazon's HTML forms scraped (`core config_flow.py:102`, `aio login.py:88`) | sign in to Amazon in your own browser and paste the final address, or reuse the AMP session: `config_flow.py` |
 | Password kept by Home Assistant | yes, in the config entry (`AMP config_flow.py:475`) | yes, in the config entry (`core config_flow.py:157`) | no: only the device registration (refresh token, cookies) |
@@ -38,7 +38,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Discovery
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Devices found on the network | — (`AMP manifest.json:8`, no discovery keys) | — (`core manifest.json:13`, discovery exempt) | zeroconf (`_spotify-connect` for Echos, `_amzn-wplay` for Fire TVs) and DHCP: `manifest.json`, `config_flow.py` |
 | Startup browse of the LAN | — | — | `coordinator.py` |
@@ -47,7 +47,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Local network
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | IP address of a device | — | — | `entity.sensor.ip_address` |
 | Reachability on the LAN, independent of the cloud | — | — | `entity.binary_sensor.local_reachable` |
@@ -57,7 +57,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## How data is updated
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Push channel (HTTP/2) | `apy alexahttp2.py:43` | `core __init__.py:83`, `aio implementation/http2.py:108` | `coordinator.py` |
 | Polling interval | 60 s, ×10 while push is up (`AMP const.py:87`) | 300 s fixed (`core coordinator.py:47`) | 300 s, 60 s while push is down, configurable: `coordinator.py` |
@@ -68,7 +68,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Push events handled
 
-| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | `PUSH_VOLUME_CHANGE` | `AMP __init__.py:2824` | `aio api.py:465` | applied in place: `coordinator.py` |
 | `PUSH_AUDIO_PLAYER_STATE` | `AMP __init__.py:2801` | `aio api.py:470` | state in place, metadata re-read |
@@ -90,7 +90,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Media player
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | One player per device | `AMP media_player.py:233` | `core media_player.py:73` | `media_player.py` |
 | Speaker groups as players | `AMP media_player.py:264` | speaker groups are devices (`aio const/devices.py:14`) | `media_player.py` (members and groups as attributes) |
@@ -118,7 +118,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Notify
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Speak on a device | `AMP notify.py:301` (`type: tts`) | `core notify.py:38` | `entity.notify.speak` |
 | Announce with a chime and a title | `AMP notify.py:317` (`type: announce`) | `core notify.py:47` | `entity.notify.announce` |
@@ -131,7 +131,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Switch
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Do not disturb | `AMP switch.py:412` | `core switch.py:72` | `entity.switch.do_not_disturb` |
 | Announcements allowed | — | `core switch.py:89` | `entity.switch.announcements` |
@@ -151,7 +151,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Select
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Drop In: all / home / off | — | `core select.py:32` | `entity.select.drop_in` |
 | Default device for routines | — | `core select.py:46` | `entity.select.default_device` |
@@ -163,7 +163,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Number
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Alarm and timer volume | `AMP number.py:97` | — | `entity.number.alarm_volume` |
 | Echo Show display brightness | `AMP display.py:338` | — | `entity.number.display_brightness` |
@@ -172,7 +172,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Sensor
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Next alarm | `AMP sensor.py:1185` | `core sensor.py:127` | `entity.sensor.next_alarm` (all alarms as attributes) |
 | Next timer | `AMP sensor.py:1205` | `core sensor.py:137` | `entity.sensor.next_timer` |
@@ -196,7 +196,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Binary sensor
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Online | availability of the player (`AMP media_player.py:1198`) | `core binary_sensor.py:39` | `entity.binary_sensor.online` |
 | Motion | — | `core binary_sensor.py:45` | `entity.binary_sensor.motion` |
@@ -207,7 +207,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Button, event, to-do
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Restart a device | `AMP button.py:90` | `core button.py:33` | `entity.button.reboot` |
 | One button per routine | — | `core button.py:78` | `entity.button.routine` |
@@ -217,7 +217,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ### Light, lock, alarm panel
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Echo Glow: on/off, brightness, colour, light shows | — | `core light.py:55` | `light.py` (always added) |
 | Lamps linked to Alexa: on/off, brightness | `AMP light.py:127` (Echo-hub devices only, opt-in) | — | `light.py` (opt-in) |
@@ -230,7 +230,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Actions
 
-| Action | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Action | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Send a text command | `play_media` `custom` (`AMP media_player.py:2058`) | `send_text_command` (`core services.py:119`) | `amazon_echo.send_text_command` |
 | Play a built-in sound | `play_media` `sound` (`AMP media_player.py:2003`) | `send_sound` (`core services.py:114`) | `amazon_echo.play_sound` |
@@ -262,7 +262,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Events on the bus
 
-| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Event | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | A voice command was heard | `alexa_media_voice_command` (`AMP __init__.py:2124`) | — | `amazon_echo_voice_command`: `coordinator.py` |
 | Another device became the last called | `alexa_media_last_called_event` (`AMP media_player.py:2280`) | — | `amazon_echo_last_called`: `coordinator.py` |
@@ -272,7 +272,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Options
 
-| Option | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Option | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Polling interval | `scan_interval` (`AMP const.py:72`) | — | `scan_interval`: `config_flow.py` |
 | Push on/off | — | — | `enable_push` |
@@ -286,7 +286,7 @@ and [In a competitor but not in amazon_echo](#in-a-competitor-but-not-in-amazon_
 
 ## Diagnostics
 
-| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.3 |
+| Feature | AMP 5.21.0 | Core alexa_devices | amazon_echo 0.4 |
 | --- | --- | --- | --- |
 | Config entry diagnostics, redacted | `AMP diagnostics.py:357` | `core diagnostics.py:34` | `diagnostics.py` (devices under aliases, voice transcripts redacted) |
 | Device diagnostics | `AMP diagnostics.py:410` | `core diagnostics.py:55` | `diagnostics.py` |
