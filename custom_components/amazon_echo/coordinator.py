@@ -68,6 +68,7 @@ if TYPE_CHECKING:
 WRITE_SETTLE_SECONDS = 1.0
 PUSH_DEBOUNCE_SECONDS = 2.0
 SLOW_CONCURRENCY = 4
+FAST_TIMEOUT_SECONDS = 90
 
 type AccountFetcher = Callable[[AmazonEchoClient], Awaitable[Any]]
 type DeviceFetcher = Callable[[AmazonEchoClient, Device], Awaitable[Any]]
@@ -251,30 +252,34 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         first = self.data is None
         data = AmazonEchoData() if first else self.data
         try:
-            devices = await self.client.get_devices()
-            data.devices = {d.serial: d for d in devices if not d.is_app}
-            await _gather(self._async_fetch(data, key) for key in FAST_FETCHERS)
-            await _gather(
-                self._async_fetch(data, "media", device)
-                for device in data.devices.values()
-                if (device.supports(CAP_AUDIO_PLAYER) or device.is_group)
-                and device.online
-                # with push connected only playing devices need a progress poll
-                and (
-                    first
-                    or not self.push_connected
-                    or data.media.get(device.serial, MediaState()).state == "playing"
+            # Bounded so a slow network at boot makes HA retry the entry instead
+            # of cancelling its setup (a cancelled setup is never retried).
+            async with asyncio.timeout(FAST_TIMEOUT_SECONDS):
+                devices = await self.client.get_devices()
+                data.devices = {d.serial: d for d in devices if not d.is_app}
+                await _gather(self._async_fetch(data, key) for key in FAST_FETCHERS)
+                await _gather(
+                    self._async_fetch(data, "media", device)
+                    for device in data.devices.values()
+                    if (device.supports(CAP_AUDIO_PLAYER) or device.is_group)
+                    and device.online
+                    # with push connected only playing devices need a progress poll
+                    and (
+                        first
+                        or not self.push_connected
+                        or data.media.get(device.serial, MediaState()).state
+                        == "playing"
+                    )
                 )
-            )
         except AmazonEchoAuthenticationError as err:
             raise ConfigEntryAuthFailed(
                 translation_domain=DOMAIN, translation_key="invalid_auth"
             ) from err
-        except AmazonEchoError as err:
+        except (AmazonEchoError, TimeoutError) as err:
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="cannot_connect",
-                translation_placeholders={"error": str(err)},
+                translation_placeholders={"error": str(err) or "timeout"},
             ) from err
         self._async_remove_stale_devices(data)
         return data

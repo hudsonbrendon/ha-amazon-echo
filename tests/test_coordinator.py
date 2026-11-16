@@ -542,3 +542,26 @@ async def test_lan_browser_maps_hosts(
     handler(None, "_spotify-connect._tcp.local.", "x", ServiceStateChange.Removed)
     await _settle(hass)
     assert coordinator._discovered == {"kitchen echo": "192.0.2.55"}
+
+
+async def test_slow_network_at_boot_retries_setup(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """A hanging first refresh ends in a retry, not in a cancelled setup."""
+    from unittest.mock import patch
+
+    from homeassistant.config_entries import ConfigEntryState
+
+    async def hang() -> None:
+        await asyncio.sleep(3600)
+
+    mock_client.get_devices.side_effect = hang
+    mock_config_entry.add_to_hass(hass)
+    with patch("custom_components.amazon_echo.coordinator.FAST_TIMEOUT_SECONDS", 0.01):
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+    assert mock_config_entry.state is ConfigEntryState.SETUP_RETRY

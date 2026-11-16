@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 - 2026-11-16
+
+- The first refresh is bounded to 90 s. With a slow network at boot Home Assistant now retries the entry; before, the global bootstrap timeout cancelled the setup and left the entry in error until a manual reload.
+
 ## 0.1.1 - 2026-11-16
 
 - Requires `python-amazon-echo` 0.1.1 (cookie refresh no longer refused within 60 s of boot).
