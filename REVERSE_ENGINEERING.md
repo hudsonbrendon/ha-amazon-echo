@@ -148,3 +148,15 @@ Live check on an Echo Plus, plain port 55442, GET only: `/control`, `/connectivi
 **Consequence:** a third party cannot join the local control plane — its certificate would never be in the trust list that Amazon's cloud distributes. This turns "the local ports looked closed" into "local control is cryptographically reserved to devices of the same Amazon account". The integration's local side (discovery, IP/MAC, reachability, Spotify state) is therefore the full extent of what the LAN offers.
 
 Not done: no Echo firmware image was obtained, so nothing Echo-specific was disassembled; the Fire TV library is the same component but a different build.
+
+### 7.1 The same checks on every Echo, captured by REA
+
+`capture_process_scenario` evidence `ev_692997be…` ran one read-only probe against all seven Echos (Echo Plus, Echo Pop, four Echo Dot, Echo Show 5):
+
+| Check | Result on all 7 |
+|---|---|
+| TLS on 55443 | self-signed certificate with organisation `WHALEXA`; handshake without a client certificate is rejected (`TLS_ALERT_HANDSHAKE_FAILURE`) |
+| HTTP on 55442 | `/control` and `/connectivity-test` → generic 404 (30 bytes); `/audio` → handler 404 (empty body) |
+| Spotify zeroconf on 4070 | answers on 5 of 7 (`Echo_Plus`, `Echo_Pop`, `Echo_Dot`, library `3.209.367`); the Echo Show 5 and one Echo Dot do not serve it |
+
+The certificate organisation, the client-certificate requirement and the route behaviour are exactly what the Fire TV's `libwhadjni.so` describes, so the control-plane conclusion above applies to the Echos themselves, not only to the Fire TV.
