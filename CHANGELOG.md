@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 - 2026-11-16
+
+- Requires `python-amazon-echo` 0.1.1 (cookie refresh no longer refused within 60 s of boot).
+- The LAN is browsed at startup, so local entities appear without waiting for a device announcement.
+- The slow settings tier runs in the background instead of during entry setup.
+
 ## 0.1.0 - 2026-11-15
 
 First release.
