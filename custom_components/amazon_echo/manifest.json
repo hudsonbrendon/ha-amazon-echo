@@ -1,0 +1,17 @@
+{
+  "domain": "amazon_echo",
+  "name": "Amazon Echo",
+  "after_dependencies": ["alexa_media"],
+  "codeowners": ["@hudsonbrendon"],
+  "config_flow": true,
+  "dependencies": [],
+  "dhcp": [{ "registered_devices": true }],
+  "documentation": "https://github.com/hudsonbrendon/ha-amazon-echo",
+  "integration_type": "hub",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/hudsonbrendon/ha-amazon-echo/issues",
+  "loggers": ["amazon_echo"],
+  "requirements": ["python-amazon-echo==0.1.0"],
+  "version": "0.1.0",
+  "zeroconf": ["_spotify-connect._tcp.local.", "_amzn-wplay._tcp.local."]
+}

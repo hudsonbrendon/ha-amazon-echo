@@ -1,0 +1,180 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "aux_plugged": {
+        "default": "mdi:audio-input-stereo-minijack"
+      }
+    },
+    "button": {
+      "routine": {
+        "default": "mdi:play-circle-outline"
+      }
+    },
+    "event": {
+      "voice": {
+        "default": "mdi:account-voice"
+      }
+    },
+    "notify": {
+      "speak": {
+        "default": "mdi:account-voice"
+      },
+      "announce": {
+        "default": "mdi:bullhorn"
+      }
+    },
+    "number": {
+      "bass": {
+        "default": "mdi:equalizer"
+      },
+      "mid": {
+        "default": "mdi:equalizer"
+      },
+      "treble": {
+        "default": "mdi:equalizer"
+      },
+      "alarm_volume": {
+        "default": "mdi:alarm-note"
+      },
+      "speaking_rate": {
+        "default": "mdi:speedometer"
+      }
+    },
+    "select": {
+      "wake_word": {
+        "default": "mdi:microphone-message"
+      },
+      "alarm_sound": {
+        "default": "mdi:music-note"
+      },
+      "aux_direction": {
+        "default": "mdi:audio-input-stereo-minijack"
+      },
+      "time_format": {
+        "default": "mdi:clock-outline"
+      }
+    },
+    "sensor": {
+      "next_alarm": {
+        "default": "mdi:alarm"
+      },
+      "next_timer": {
+        "default": "mdi:timer-outline"
+      },
+      "next_reminder": {
+        "default": "mdi:reminder"
+      },
+      "wifi_ssid": {
+        "default": "mdi:wifi"
+      },
+      "ip_address": {
+        "default": "mdi:ip-network"
+      },
+      "bluetooth_device": {
+        "default": "mdi:bluetooth"
+      },
+      "spotify_user": {
+        "default": "mdi:spotify"
+      },
+      "time_zone": {
+        "default": "mdi:map-clock"
+      },
+      "wake_word_sensitivity": {
+        "default": "mdi:microphone-settings"
+      }
+    },
+    "switch": {
+      "do_not_disturb": {
+        "default": "mdi:minus-circle-outline",
+        "state": {
+          "on": "mdi:minus-circle"
+        }
+      },
+      "ascending_alarm": {
+        "default": "mdi:alarm-plus"
+      },
+      "wake_word_sound": {
+        "default": "mdi:bell-ring-outline"
+      },
+      "end_of_request_sound": {
+        "default": "mdi:bell-check-outline"
+      },
+      "ambient_mode": {
+        "default": "mdi:image-frame"
+      },
+      "adaptive_listening": {
+        "default": "mdi:ear-hearing"
+      },
+      "captions": {
+        "default": "mdi:closed-caption-outline"
+      },
+      "gestures": {
+        "default": "mdi:gesture"
+      },
+      "night_mode": {
+        "default": "mdi:weather-night"
+      },
+      "smart_motion": {
+        "default": "mdi:rotate-3d-variant"
+      },
+      "visual_gesture": {
+        "default": "mdi:hand-wave-outline"
+      },
+      "tap_gestures": {
+        "default": "mdi:gesture-tap"
+      },
+      "whisper_mode": {
+        "default": "mdi:account-voice-off"
+      },
+      "adaptive_volume": {
+        "default": "mdi:volume-vibrate"
+      }
+    },
+    "todo": {
+      "list": {
+        "default": "mdi:format-list-checks"
+      }
+    }
+  },
+  "services": {
+    "send_text_command": {
+      "service": "mdi:message-text-outline"
+    },
+    "play_sound": {
+      "service": "mdi:music-note"
+    },
+    "run_routine": {
+      "service": "mdi:play-circle-outline"
+    },
+    "launch_skill": {
+      "service": "mdi:rocket-launch-outline"
+    },
+    "create_alarm": {
+      "service": "mdi:alarm-plus"
+    },
+    "create_timer": {
+      "service": "mdi:timer-plus-outline"
+    },
+    "create_reminder": {
+      "service": "mdi:reminder"
+    },
+    "delete_notification": {
+      "service": "mdi:alarm-off"
+    },
+    "get_notifications": {
+      "service": "mdi:alarm-multiple"
+    },
+    "get_voice_history": {
+      "service": "mdi:history"
+    },
+    "bluetooth_connect": {
+      "service": "mdi:bluetooth-connect"
+    },
+    "bluetooth_disconnect": {
+      "service": "mdi:bluetooth-off"
+    },
+    "call_feature": {
+      "service": "mdi:api"
+    }
+  }
+}

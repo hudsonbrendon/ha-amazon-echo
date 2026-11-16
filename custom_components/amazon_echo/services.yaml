@@ -1,0 +1,190 @@
+send_text_command:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    text:
+      required: true
+      example: "what is the weather tomorrow"
+      selector:
+        text:
+
+play_sound:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    sound:
+      required: true
+      example: amzn_sfx_doorbell_chime_01
+      selector:
+        text:
+
+run_routine:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    routine:
+      required: true
+      example: "Good night"
+      selector:
+        text:
+
+launch_skill:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    skill_id:
+      required: true
+      example: amzn1.ask.skill.00000000-0000-0000-0000-000000000000
+      selector:
+        text:
+
+create_alarm:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    time:
+      required: true
+      example: "2026-12-01 07:00:00"
+      selector:
+        datetime:
+    label:
+      example: Wake up
+      selector:
+        text:
+    recurrence:
+      example: P1D
+      selector:
+        text:
+
+create_timer:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    duration:
+      required: true
+      example: "00:10:00"
+      selector:
+        duration:
+    label:
+      example: Pasta
+      selector:
+        text:
+
+create_reminder:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    time:
+      required: true
+      example: "2026-12-01 18:00:00"
+      selector:
+        datetime:
+    label:
+      required: true
+      example: Take out the trash
+      selector:
+        text:
+
+delete_notification:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    notification_id:
+      required: true
+      selector:
+        text:
+
+get_notifications:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+
+get_voice_history:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    limit:
+      example: 10
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+
+bluetooth_connect:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    address:
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:
+
+bluetooth_disconnect:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+
+call_feature:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: amazon_echo
+    feature:
+      required: true
+      example: power
+      selector:
+        text:
+    operation:
+      required: true
+      example: turnOn
+      selector:
+        text:
+    endpoint_id:
+      selector:
+        text:
+    instance:
+      selector:
+        text:
+    payload:
+      selector:
+        object:

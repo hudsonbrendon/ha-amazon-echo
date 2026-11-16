@@ -1,0 +1,509 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Connect your Amazon account",
+        "description": "Choose how to sign in. No password is asked or stored by Home Assistant.",
+        "menu_options": {
+          "import_alexa_media": "Reuse the Alexa Media Player session",
+          "browser": "Sign in with my browser"
+        }
+      },
+      "import_alexa_media": {
+        "title": "Alexa Media Player session",
+        "description": "More than one Alexa Media Player account is set up. Pick the one to reuse.",
+        "data": {
+          "entry": "Account"
+        },
+        "data_description": {
+          "entry": "The Alexa Media Player entry whose session will be copied."
+        }
+      },
+      "browser": {
+        "title": "Sign in to Amazon",
+        "description": "1. [Open the Amazon sign-in page]({url}) and sign in as usual (passkey, two-step verification and captcha all work).\n2. When you land on a blank or \"page not found\" page, copy the full address from the browser's address bar.\n3. Paste it below.",
+        "data": {
+          "url": "Address of the final page"
+        },
+        "data_description": {
+          "url": "The whole address, starting with https and containing the authorization code."
+        }
+      },
+      "discovery_confirm": {
+        "title": "Amazon Echo found",
+        "description": "{name} was found on your network. Do you want to connect your Amazon account to Home Assistant?"
+      },
+      "reauth_confirm": {
+        "title": "Sign in again",
+        "description": "Amazon no longer accepts the stored session. Choose how to sign in again.",
+        "menu_options": {
+          "import_alexa_media": "Reuse the Alexa Media Player session",
+          "browser": "Sign in with my browser"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace the Amazon session",
+        "description": "Choose how to sign in. It must be the same Amazon account.",
+        "menu_options": {
+          "import_alexa_media": "Reuse the Alexa Media Player session",
+          "browser": "Sign in with my browser"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Amazon refused the sign-in. Open the link again and paste the new address.",
+      "cannot_connect": "Could not reach Amazon. Check the internet connection and try again.",
+      "invalid_url": "That address has no authorization code. Copy the full address of the page you landed on after signing in.",
+      "unknown": "Unexpected error. Check the logs."
+    },
+    "abort": {
+      "already_configured": "This Amazon account is already configured.",
+      "already_in_progress": "The setup of this account is already in progress.",
+      "not_amazon_device": "The discovered device is not an Amazon device.",
+      "reauth_successful": "Signed in again.",
+      "reconfigure_successful": "The Amazon session was replaced.",
+      "wrong_account": "That is a different Amazon account. Sign in with the account of this entry.",
+      "import_failed": "Could not read the Alexa Media Player session. Sign in with your browser instead.",
+      "invalid_auth": "Amazon refused the Alexa Media Player session. Sign in with your browser instead.",
+      "cannot_connect": "Could not reach Amazon. Check the internet connection and try again.",
+      "unknown": "Unexpected error. Check the logs."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Amazon Echo options",
+        "data": {
+          "scan_interval": "Polling interval",
+          "enable_push": "Receive changes by push",
+          "enable_local": "Probe devices on the local network"
+        },
+        "data_description": {
+          "scan_interval": "Only a fallback while push is connected. When push is down the account is polled every 60 seconds.",
+          "enable_push": "Volume, playback, do not disturb, alarms and voice commands arrive as they happen.",
+          "enable_local": "IP address, local reachability and Spotify user, read from the device itself every 60 seconds."
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "local_reachable": {
+        "name": "Reachable on the local network"
+      },
+      "aux_plugged": {
+        "name": "AUX cable plugged in"
+      },
+      "charging": {
+        "name": "Charging"
+      }
+    },
+    "button": {
+      "reboot": {
+        "name": "Reboot"
+      },
+      "routine": {
+        "name": "{name}"
+      }
+    },
+    "event": {
+      "voice": {
+        "name": "Voice command",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "voice_command": "Voice command"
+            }
+          }
+        }
+      }
+    },
+    "notify": {
+      "speak": {
+        "name": "Speak"
+      },
+      "announce": {
+        "name": "Announce"
+      }
+    },
+    "number": {
+      "bass": {
+        "name": "Bass"
+      },
+      "mid": {
+        "name": "Midrange"
+      },
+      "treble": {
+        "name": "Treble"
+      },
+      "alarm_volume": {
+        "name": "Alarm volume"
+      },
+      "speaking_rate": {
+        "name": "Speaking rate"
+      }
+    },
+    "select": {
+      "wake_word": {
+        "name": "Wake word"
+      },
+      "alarm_sound": {
+        "name": "Alarm sound"
+      },
+      "aux_direction": {
+        "name": "AUX direction",
+        "state": {
+          "input": "Input",
+          "output": "Output"
+        }
+      },
+      "time_format": {
+        "name": "Time format",
+        "state": {
+          "12_hours": "12 hours",
+          "24_hours": "24 hours"
+        }
+      }
+    },
+    "sensor": {
+      "next_alarm": {
+        "name": "Next alarm"
+      },
+      "next_timer": {
+        "name": "Next timer"
+      },
+      "next_reminder": {
+        "name": "Next reminder"
+      },
+      "temperature": {
+        "name": "Temperature"
+      },
+      "wifi_ssid": {
+        "name": "Wi-Fi network"
+      },
+      "ip_address": {
+        "name": "IP address"
+      },
+      "bluetooth_device": {
+        "name": "Bluetooth device"
+      },
+      "battery": {
+        "name": "Battery"
+      },
+      "remote_battery": {
+        "name": "Remote battery"
+      },
+      "spotify_user": {
+        "name": "Spotify user"
+      },
+      "time_zone": {
+        "name": "Time zone"
+      },
+      "wake_word_sensitivity": {
+        "name": "Wake word sensitivity"
+      }
+    },
+    "switch": {
+      "do_not_disturb": {
+        "name": "Do not disturb"
+      },
+      "ascending_alarm": {
+        "name": "Ascending alarm"
+      },
+      "wake_word_sound": {
+        "name": "Start of request sound"
+      },
+      "end_of_request_sound": {
+        "name": "End of request sound"
+      },
+      "ambient_mode": {
+        "name": "Ambient mode"
+      },
+      "adaptive_listening": {
+        "name": "Adaptive listening"
+      },
+      "captions": {
+        "name": "Captions"
+      },
+      "gestures": {
+        "name": "Gestures"
+      },
+      "night_mode": {
+        "name": "Night mode"
+      },
+      "smart_motion": {
+        "name": "Smart motion"
+      },
+      "visual_gesture": {
+        "name": "Visual gesture"
+      },
+      "tap_gestures": {
+        "name": "Tap gestures"
+      },
+      "whisper_mode": {
+        "name": "Whisper mode"
+      },
+      "adaptive_volume": {
+        "name": "Adaptive volume"
+      }
+    },
+    "todo": {
+      "list": {
+        "name": "{name}"
+      }
+    }
+  },
+  "services": {
+    "send_text_command": {
+      "name": "Send text command",
+      "description": "Sends a typed request to Alexa as if it had been spoken to the device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that receives the command."
+        },
+        "text": {
+          "name": "Text",
+          "description": "What you would say to Alexa, without the wake word."
+        }
+      }
+    },
+    "play_sound": {
+      "name": "Play sound",
+      "description": "Plays one of Alexa's built-in sounds on a device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that plays the sound."
+        },
+        "sound": {
+          "name": "Sound",
+          "description": "Identifier of the sound."
+        }
+      }
+    },
+    "run_routine": {
+      "name": "Run routine",
+      "description": "Runs an Alexa routine.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device the routine runs on. Pick the account to use the routine's own device."
+        },
+        "routine": {
+          "name": "Routine",
+          "description": "Name or identifier of the routine."
+        }
+      }
+    },
+    "launch_skill": {
+      "name": "Launch skill",
+      "description": "Opens an Alexa skill on a device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that opens the skill."
+        },
+        "skill_id": {
+          "name": "Skill ID",
+          "description": "Identifier of the skill."
+        }
+      }
+    },
+    "create_alarm": {
+      "name": "Create alarm",
+      "description": "Creates an alarm on a device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that rings."
+        },
+        "time": {
+          "name": "Time",
+          "description": "Date and time of the alarm."
+        },
+        "label": {
+          "name": "Label",
+          "description": "Optional name of the alarm."
+        },
+        "recurrence": {
+          "name": "Recurrence",
+          "description": "Optional ISO 8601 repetition, for example P1D for every day."
+        }
+      }
+    },
+    "create_timer": {
+      "name": "Create timer",
+      "description": "Starts a timer on a device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that rings."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "How long the timer runs."
+        },
+        "label": {
+          "name": "Label",
+          "description": "Optional name of the timer."
+        }
+      }
+    },
+    "create_reminder": {
+      "name": "Create reminder",
+      "description": "Creates a reminder that Alexa speaks on a device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device that speaks the reminder."
+        },
+        "time": {
+          "name": "Time",
+          "description": "Date and time of the reminder."
+        },
+        "label": {
+          "name": "Text",
+          "description": "What Alexa says."
+        }
+      }
+    },
+    "delete_notification": {
+      "name": "Delete alarm, timer or reminder",
+      "description": "Deletes an alarm, timer or reminder by its identifier.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Any device of the account."
+        },
+        "notification_id": {
+          "name": "Notification ID",
+          "description": "Identifier from the next alarm/timer/reminder sensors or from the get notifications action."
+        }
+      }
+    },
+    "get_notifications": {
+      "name": "Get alarms, timers and reminders",
+      "description": "Returns every alarm, timer and reminder of a device, or of the whole account.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "A device, or the account for everything."
+        }
+      }
+    },
+    "get_voice_history": {
+      "name": "Get voice history",
+      "description": "Returns the latest voice interactions of a device, or of the whole account.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "A device, or the account for everything."
+        },
+        "limit": {
+          "name": "Limit",
+          "description": "How many interactions to read."
+        }
+      }
+    },
+    "bluetooth_connect": {
+      "name": "Connect Bluetooth device",
+      "description": "Connects a device to one of its paired Bluetooth devices.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Echo that connects."
+        },
+        "address": {
+          "name": "Bluetooth device",
+          "description": "Name or address of the paired Bluetooth device."
+        }
+      }
+    },
+    "bluetooth_disconnect": {
+      "name": "Disconnect Bluetooth device",
+      "description": "Disconnects the Bluetooth device a device is connected to.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Echo that disconnects."
+        }
+      }
+    },
+    "call_feature": {
+      "name": "Call endpoint feature",
+      "description": "Advanced: calls a feature operation of an Alexa endpoint directly.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device whose endpoint is used, or the account together with an endpoint ID."
+        },
+        "feature": {
+          "name": "Feature",
+          "description": "Name of the feature, for example power."
+        },
+        "operation": {
+          "name": "Operation",
+          "description": "Name of the operation, for example turnOn."
+        },
+        "endpoint_id": {
+          "name": "Endpoint ID",
+          "description": "Optional endpoint to use instead of the device's own."
+        },
+        "instance": {
+          "name": "Instance",
+          "description": "Optional feature instance."
+        },
+        "payload": {
+          "name": "Payload",
+          "description": "Optional arguments of the operation."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_auth": {
+      "message": "Amazon no longer accepts the stored session. Sign in again."
+    },
+    "cannot_connect": {
+      "message": "Could not reach the Alexa cloud: {error}"
+    },
+    "not_supported": {
+      "message": "The device does not support this: {error}"
+    },
+    "communication_error": {
+      "message": "The Alexa cloud refused the request: {error}"
+    },
+    "routine_not_found": {
+      "message": "There is no routine called {routine}."
+    },
+    "device_not_found": {
+      "message": "Device {device_id} is not an Amazon Echo device."
+    },
+    "entry_not_loaded": {
+      "message": "The Amazon account of device {device_id} is not loaded."
+    },
+    "device_required": {
+      "message": "This action needs a device, not the account."
+    },
+    "notification_not_found": {
+      "message": "There is no alarm, timer or reminder with ID {notification_id}."
+    },
+    "bluetooth_not_paired": {
+      "message": "{address} is not paired with this device."
+    },
+    "no_endpoint": {
+      "message": "This device has no endpoint. Provide an endpoint ID."
+    },
+    "unsupported_media_type": {
+      "message": "Media type {media_type} is not supported. Use music, routine, sound, skill, text_command or tts."
+    },
+    "item_not_found": {
+      "message": "Item {item} is no longer on the list."
+    }
+  }
+}
