@@ -39,7 +39,7 @@ MIN_SCAN_INTERVAL: Final = 60
 MAX_SCAN_INTERVAL: Final = 3600
 # Polling is only a fallback while push is connected; without push it speeds up.
 PUSH_DOWN_SCAN_INTERVAL: Final = 60
-SLOW_INTERVAL: Final = timedelta(minutes=30)
+SLOW_INTERVAL: Final = timedelta(hours=3)
 LOCAL_INTERVAL: Final = timedelta(seconds=60)
 
 # Per-device settings read through /api/v1/devices/{id}/settings/{key}.

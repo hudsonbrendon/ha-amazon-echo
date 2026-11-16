@@ -178,6 +178,11 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         self._unsubs.append(
             async_track_time_interval(self.hass, self._async_poll_slow, SLOW_INTERVAL)
         )
+        # Hundreds of per-device calls: far too slow for entry setup, so the
+        # setting entities appear a little after the rest (added by listener).
+        entry.async_create_background_task(
+            self.hass, self._async_poll_slow(), f"{DOMAIN}_slow"
+        )
         if entry.options.get(CONF_ENABLE_LOCAL, True):
             self._unsubs.append(
                 async_track_time_interval(
@@ -235,7 +240,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
     # Cloud polling
     # ------------------------------------------------------------------ #
     async def _async_update_data(self) -> AmazonEchoData:
-        """Fast tier; the first refresh also runs the slow tier."""
+        """Fast tier only; the slow tier runs in the background (see async_start)."""
         first = self.data is None
         data = AmazonEchoData() if first else self.data
         try:
@@ -254,8 +259,6 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                     or data.media.get(device.serial, MediaState()).state == "playing"
                 )
             )
-            if first:
-                await self._async_update_slow(data)
         except AmazonEchoAuthenticationError as err:
             raise ConfigEntryAuthFailed(
                 translation_domain=DOMAIN, translation_key="invalid_auth"

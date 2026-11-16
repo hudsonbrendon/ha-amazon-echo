@@ -100,7 +100,7 @@ Home Assistant" under *Manage Your Content and Devices* on the Amazon site.
 | --- | --- | --- |
 | Push | as it happens | volume, do not disturb, playback, Bluetooth, alarms/timers/reminders, lists, online state, voice commands |
 | Fast poll | 300 s (60 s without push) | device list, do not disturb, volumes, Bluetooth, notifications, endpoint states (temperature, remote battery), media of playing devices |
-| Slow poll | at startup, every 30 minutes and right after a related write | Wi-Fi, equalizer, request sounds, AUX, alarm volume, wake word, alarm sounds, device settings, whisper mode, adaptive volume, routines, lists |
+| Slow poll | in the background right after startup, every 3 hours and right after a related write | Wi-Fi, equalizer, request sounds, AUX, alarm volume, wake word, alarm sounds, device settings, whisper mode, adaptive volume, routines, lists |
 | Local | 60 s | IP address, local reachability, Spotify user |
 
 A setting one device does not support is asked once and then skipped; one
