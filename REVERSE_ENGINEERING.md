@@ -123,3 +123,28 @@ account are **not** turned into entities (they already exist in HA through their
 | `geolocation`, `guardEarcon`, `hunchesEnablement`, `sleepTrackingEnablement` | cloud/device | | diagnostics only |
 
 Keys that exist but the device rejected on this model (`UnifiedPreferenceService` 400): `brightness`, `adaptiveBrightness`, `displayPower`, `motionSensorRange` — likely valid on other Echo Show models; not exposed.
+
+## 7. REA on the devices themselves (2026-11-16)
+
+Echo speakers expose no debug interface, so the device-side analysis was done on the Alexa device that does: the Fire TV Stick 4K Max
+on the LAN (FireOS 11, build `RS8185.3898N`), over ADB with the key Home Assistant already holds for it. It runs the same
+whole-home-audio stack that owns ports 55442/55443/55445 on every Echo.
+
+| REA step | Evidence | Result |
+|---|---|---|
+| `inspect_adb_device` | `ev_84d97ebf…` | Android 11 / SDK 30, `ro.debuggable=0`, security patch 2025-12-01 |
+| `list_adb_packages` (system) | `ev_5f647b52…` | 250+ packages; Alexa stack: `com.amazon.whad`, `com.amazon.vizzini`, `com.amazon.alexadirectivebrokerservice`, `com.amazon.whisperlink.core.android`, `com.amazon.dialservice`, `com.amazon.tv.matter` |
+| `pull_adb_package com.amazon.whad` + `inspect_android_package` | `ev_b43214c2…`, `ev_12e1e7f0…` | 1182 classes. Control comes from cloud directives (`WholeHomeAudio_SetClusters`, `_ClusterDirective`, `_StoreAggregatedDiscoveryInfo`, `Skew_SetSkew`) |
+| `pull_adb_file /system/system_ext/lib/libwhadjni.so` + Ghidra string search | `ev_e0540469…`, `ev_051ba9b7…`, `ev_c3af6b94…` | see below |
+
+What the native library shows (observed strings/symbols; behaviour inferred from them):
+- The local server is `Whad::HttpServerCivetWeb` — this is the CivetWeb answering on 55442/55443. Handlers: `/audio`, `/audiolocal`, `/control`, `/connectivity-test`, `/assignments/v2`.
+- Each device **generates its own X.509 "control plane" certificate** (`X509_new`/`X509_sign`, organisation string `WHALEXA`) and rotates it (`ControlPlaneManager::certificateExpired`).
+- A peer is accepted only if its certificate was installed with `HttpServer::installTrustedClientCertificate`; the list of peers and their certificates comes from Amazon's cloud (`CloudMessageUtil:toDiscoveryInfoList`, "requesting a sync from WHACS").
+- Device-to-device commands go through `Device::sendRemoteCommand` over that mutually authenticated channel.
+
+Live check on an Echo Plus, plain port 55442, GET only: `/control`, `/connectivity-test`, `/assignments/v2` → generic 404; `/audio`, `/audiolocal` → a different, empty-bodied 404 (the handler exists and wants a stream id). So 55442 is the audio data plane and control lives behind mutual TLS.
+
+**Consequence:** a third party cannot join the local control plane — its certificate would never be in the trust list that Amazon's cloud distributes. This turns "the local ports looked closed" into "local control is cryptographically reserved to devices of the same Amazon account". The integration's local side (discovery, IP/MAC, reachability, Spotify state) is therefore the full extent of what the LAN offers.
+
+Not done: no Echo firmware image was obtained, so nothing Echo-specific was disassembled; the Fire TV library is the same component but a different build.
