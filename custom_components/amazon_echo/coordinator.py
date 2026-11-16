@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable, Iterable
+from contextlib import suppress
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from homeassistant.components import zeroconf as ha_zeroconf
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
@@ -20,6 +22,8 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
+from zeroconf import IPVersion, ServiceStateChange
+from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo
 
 from amazon_echo import (
     AmazonEchoAuthenticationError,
@@ -55,6 +59,8 @@ from .const import (
     SLOW_INTERVAL,
 )
 from .data import AmazonEchoData
+
+SPOTIFY_CONNECT_TYPE = "_spotify-connect._tcp.local."
 
 if TYPE_CHECKING:
     from . import AmazonEchoConfigEntry
@@ -192,6 +198,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
             entry.async_create_background_task(
                 self.hass, self.async_poll_local(), f"{DOMAIN}_local"
             )
+            await self._async_browse_lan()
         if not entry.options.get(CONF_ENABLE_PUSH, True):
             return
         self._push = PushClient(
@@ -458,6 +465,42 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         return (hosts.get(mac) if mac else None) or self._discovered.get(
             device.name.casefold()
         )
+
+    async def _async_browse_lan(self) -> None:
+        """Find the Echos on the LAN ourselves instead of waiting for discovery flows.
+
+        Discovery flows only fire when a device announces itself again, which can
+        take hours after the entry is created.
+        """
+        aiozc = await ha_zeroconf.async_get_async_instance(self.hass)
+
+        async def resolve(service_type: str, name: str) -> None:
+            info = AsyncServiceInfo(service_type, name)
+            if not await info.async_request(aiozc.zeroconf, 3000):
+                return
+            session = async_get_clientsession(self.hass)
+            for host in info.parsed_addresses(IPVersion.V4Only):
+                with suppress(AmazonEchoError, OSError, TimeoutError):
+                    local = await probe_local(host, session=session)
+                    if local is not None and local.name:
+                        self.async_add_discovered(local.name, host)
+                        return
+
+        def on_change(
+            zeroconf: Any,
+            service_type: str,
+            name: str,
+            state_change: ServiceStateChange,
+        ) -> None:
+            if state_change is not ServiceStateChange.Removed:
+                self.config_entry.async_create_background_task(
+                    self.hass, resolve(service_type, name), f"{DOMAIN}_zeroconf"
+                )
+
+        browser = AsyncServiceBrowser(
+            aiozc.zeroconf, SPOTIFY_CONNECT_TYPE, handlers=[on_change]
+        )
+        self._unsubs.append(lambda: self.hass.async_create_task(browser.async_cancel()))
 
     @callback
     def async_add_discovered(self, name: str, host: str) -> None:

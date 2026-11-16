@@ -245,6 +245,22 @@ def no_delays() -> Generator[None]:
         yield
 
 
+@pytest.fixture(autouse=True)
+def mock_browser() -> Generator[MagicMock]:
+    """No real mDNS: the LAN browser is replaced, its handler stays reachable."""
+    with (
+        patch(
+            "custom_components.amazon_echo.coordinator.ha_zeroconf.async_get_async_instance",
+            new=AsyncMock(),
+        ),
+        patch(
+            "custom_components.amazon_echo.coordinator.AsyncServiceBrowser"
+        ) as browser,
+    ):
+        browser.return_value.async_cancel = AsyncMock()
+        yield browser
+
+
 @pytest.fixture
 def mock_client() -> Generator[MagicMock]:
     """Patch AmazonEchoClient in the integration and the config flow.

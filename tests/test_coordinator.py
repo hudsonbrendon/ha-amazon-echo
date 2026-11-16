@@ -510,3 +510,35 @@ async def test_own_session_gets_push_next_to_alexa_media(
     await setup_integration(hass, mock_config_entry)
     mock_push.start.assert_awaited_once()
     assert not ir.async_get(hass).issues
+
+
+async def test_lan_browser_maps_hosts(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_browser: MagicMock,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """A Spotify Connect announcement seen by our own browser yields the host."""
+    from unittest.mock import patch
+
+    from zeroconf import ServiceStateChange
+
+    await setup_integration(hass, mock_config_entry)
+    coordinator = mock_config_entry.runtime_data
+    coordinator._discovered.clear()
+    handler = mock_browser.call_args.kwargs["handlers"][0]
+    with patch(
+        "custom_components.amazon_echo.coordinator.AsyncServiceInfo"
+    ) as service_info:
+        service_info.return_value.async_request = AsyncMock(return_value=True)
+        service_info.return_value.parsed_addresses.return_value = ["192.0.2.55"]
+        handler(None, "_spotify-connect._tcp.local.", "x", ServiceStateChange.Added)
+        await _settle(hass)
+    assert coordinator._discovered == {"kitchen echo": "192.0.2.55"}
+
+    # a removal is ignored
+    handler(None, "_spotify-connect._tcp.local.", "x", ServiceStateChange.Removed)
+    await _settle(hass)
+    assert coordinator._discovered == {"kitchen echo": "192.0.2.55"}
