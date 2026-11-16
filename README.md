@@ -376,9 +376,9 @@ that device.
   switching a device was not. A new child profile is noticed within three
   hours.
 - **Info skills** were verified live (the "time" skill answered on an Echo
-  Plus). **Notifications to the Alexa app**: Amazon accepts them, but on the
-  test account none reached the phone, whose app registration has no
-  notification types enabled; check the Alexa app's notification permission.
+  Plus). **Notifications to the Alexa app** were verified live. They only
+  arrive when the phone allows the Alexa app to show notifications: before
+  that, Amazon accepted every request and nothing reached the phone.
   **Echo Show background image** does not work any more: Amazon accepts the
   request and keeps its own background (tried live on an Echo Show 5).
 - Deleting voice history is not offered: the endpoint the other integrations'
