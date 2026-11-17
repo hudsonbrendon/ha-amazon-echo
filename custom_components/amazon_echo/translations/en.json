@@ -723,7 +723,7 @@
         },
         "actions": {
           "name": "Actions",
-          "description": "In order. Each one is {device, action, value} (action: turn_on, turn_off, brightness, color, temperature; device: Alexa name, entity or endpoint id), {device, operations} with the editor's raw operations, {speak: text}, or a raw routine node."
+          "description": "In order. Each item has a device (Alexa name, entity or endpoint id) with an action (turn_on, turn_off, brightness, color, temperature) and a value, or the editor's raw operations; or speak with a text; or a raw routine node."
         },
         "enabled": {
           "name": "Enabled",

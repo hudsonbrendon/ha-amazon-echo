@@ -723,7 +723,7 @@
         },
         "actions": {
           "name": "Ações",
-          "description": "Em ordem. Cada uma é {device, action, value} (action: turn_on, turn_off, brightness, color, temperature; device: nome na Alexa, entidade ou endpoint id), {device, operations} com as operações cruas do editor, {speak: texto} ou um nó de rotina cru."
+          "description": "Em ordem. Cada item tem um device (nome na Alexa, entidade ou endpoint id) com uma action (turn_on, turn_off, brightness, color, temperature) e um value, ou as operations cruas do editor; ou speak com um texto; ou um nó de rotina cru."
         },
         "enabled": {
           "name": "Ativada",
