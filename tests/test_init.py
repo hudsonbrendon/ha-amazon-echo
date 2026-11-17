@@ -105,6 +105,29 @@ async def test_credentials_update_is_persisted(
     assert stored[CONF_HOSTS] == {ECHO_MAC: ECHO_HOST}
 
 
+async def test_old_session_never_overwrites_a_new_login(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    await setup_integration(hass, mock_config_entry)
+    old = Credentials.from_dict(mock_config_entry.data[CONF_CREDENTIALS])
+    hass.config_entries.async_update_entry(
+        mock_config_entry,
+        data={
+            **mock_config_entry.data,
+            CONF_CREDENTIALS: {**old.to_dict(), "refresh_token": "Atnr|new-login"},
+        },
+    )
+    old.access_token = "old-session-token"
+    mock_client.on_credentials_update(old)
+    stored = mock_config_entry.data[CONF_CREDENTIALS]
+    assert stored["refresh_token"] == "Atnr|new-login"
+    assert stored["access_token"] != "old-session-token"
+
+
 async def test_stale_device_removed_and_removal_guard(
     hass: HomeAssistant,
     mock_client: MagicMock,

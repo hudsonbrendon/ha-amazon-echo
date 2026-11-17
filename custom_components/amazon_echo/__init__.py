@@ -52,6 +52,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: AmazonEchoConfigEntry) -
 
     @callback
     def save_credentials(credentials: Credentials) -> None:
+        stored = entry.data[CONF_CREDENTIALS].get("refresh_token")
+        if stored != credentials.refresh_token:
+            # a new sign-in replaced this session while it was shutting down:
+            # never write the old one back over it
+            return
         hass.config_entries.async_update_entry(
             entry, data={**entry.data, CONF_CREDENTIALS: credentials.to_dict()}
         )

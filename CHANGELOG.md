@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 - 2026-11-17
+
+- Home Assistant no longer asks to sign in to Amazon again seconds after a sign-in. One Alexa route refusing a request (fresh cookies not yet accepted, a page that wants a recent sign-in) was taken for an expired session; now only a refresh token Amazon refuses is. The session that a new sign-in replaced can no longer ask for another sign-in, nor write its old credentials over the new ones. Requires `python-amazon-echo` 0.4.1.
+
 ## 0.4.1 - 2026-11-16
 
 - Routine actions accept any Home Assistant entity as `device` (a Tuya lamp, for instance): it is matched by name to the Alexa device. Before, only this integration's own smart-home entities were understood.

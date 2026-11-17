@@ -204,6 +204,33 @@ async def test_auth_error_while_polling_starts_reauth(
     assert [f["context"]["source"] for f in flows] == ["reauth"]
 
 
+async def test_no_reauth_from_a_replaced_session(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_push: FakePush,
+    mock_local: dict[str, AsyncMock],
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """After a new sign-in the old session must not ask for another one."""
+    await setup_integration(hass, mock_config_entry)
+    coordinator = mock_config_entry.runtime_data
+    hass.config_entries.async_update_entry(
+        mock_config_entry,
+        data={
+            **mock_config_entry.data,
+            CONF_CREDENTIALS: {
+                **mock_config_entry.data[CONF_CREDENTIALS],
+                "refresh_token": "Atnr|new-login",
+            },
+        },
+    )
+    coordinator.async_reauth()
+    mock_client.get_dnd.side_effect = AmazonEchoAuthenticationError("old session")
+    await coordinator.async_refresh()
+    await _settle(hass)
+    assert hass.config_entries.flow.async_progress() == []
+
+
 async def test_fast_tier_keeps_last_value_on_partial_failure(
     hass: HomeAssistant,
     mock_client: MagicMock,

@@ -55,6 +55,7 @@ from .const import (
     BUS_NOTIFICATION,
     BUS_VOICE_COMMAND,
     CAP_AUDIO_PLAYER,
+    CONF_CREDENTIALS,
     CONF_ENABLE_LOCAL,
     CONF_ENABLE_PUSH,
     CONF_HOSTS,
@@ -363,6 +364,8 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                     # no push to say that a device heard something
                     await self._async_fetch_voice(data)
         except AmazonEchoAuthenticationError as err:
+            if self._credentials_replaced:
+                raise UpdateFailed(str(err)) from err
             raise ConfigEntryAuthFailed(
                 translation_domain=DOMAIN, translation_key="invalid_auth"
             ) from err
@@ -443,7 +446,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                     # someone talks to Alexa again
                     await self._async_fetch_voice(seed=True)
             except AmazonEchoAuthenticationError:
-                self.config_entry.async_start_reauth(self.hass)
+                self.async_reauth()
                 return
             self.async_update_listeners()
         if self._slow_retry is not None:
@@ -639,7 +642,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                 else:
                     await self._async_fetch(data, kind, data.devices.get(serial or ""))
         except AmazonEchoAuthenticationError:
-            self.config_entry.async_start_reauth(self.hass)
+            self.async_reauth()
             return
         self._async_pushed()
 
@@ -735,7 +738,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
         try:
             await self._async_fetch_voice(seed=seed)
         except AmazonEchoAuthenticationError:
-            self.config_entry.async_start_reauth(self.hass)
+            self.async_reauth()
             return
         self.async_update_listeners()
 
@@ -833,6 +836,18 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
     # ------------------------------------------------------------------ #
     # Helpers used by entities and actions
     # ------------------------------------------------------------------ #
+    @property
+    def _credentials_replaced(self) -> bool:
+        """True for a coordinator still running after a new sign-in."""
+        stored = self.config_entry.data[CONF_CREDENTIALS].get("refresh_token")
+        return stored != self.client.credentials.refresh_token
+
+    @callback
+    def async_reauth(self) -> None:
+        """Ask for a new sign-in, unless this session was already replaced."""
+        if not self._credentials_replaced:
+            self.config_entry.async_start_reauth(self.hass)
+
     async def async_write(
         self,
         action: Awaitable[Any],
@@ -847,7 +862,7 @@ class AmazonEchoCoordinator(DataUpdateCoordinator[AmazonEchoData]):
                 await asyncio.sleep(WRITE_SETTLE_SECONDS)
                 await self._async_fetch(self.data, refresh, device)
         except AmazonEchoAuthenticationError as err:
-            self.config_entry.async_start_reauth(self.hass)
+            self.async_reauth()
             raise HomeAssistantError(
                 translation_domain=DOMAIN, translation_key="invalid_auth"
             ) from err
