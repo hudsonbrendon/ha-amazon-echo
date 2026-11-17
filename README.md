@@ -274,7 +274,8 @@ Every action takes `device_id`: an Echo, or the account device where noted.
 Routine actions run in order. Each one is `{device, action, value}`, where
 `action` is `turn_on`, `turn_off`, `brightness` (0–100), `color` (a name such
 as `blue`) or `temperature` (°C) and `device` is the device's name in the
-Alexa app, one of this integration's entities or an endpoint id; or
+Alexa app, any Home Assistant entity (matched to the Alexa device of the same
+name) or an endpoint id; or
 `{device, operations}` with the routine editor's own operations; or
 `{speak: text}` (the Echo that heard the phrase says it); or a raw routine
 node. `replace_devices` repairs routines after a device was replaced: every

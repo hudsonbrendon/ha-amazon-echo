@@ -368,6 +368,9 @@ async def test_create_routine(hass: HomeAssistant, mock_client: MagicMock) -> No
         Endpoint(id=LAMP, name="Lâmpada 1 da sala", category="LIGHT")
     ]
     mock_client.create_routine.return_value = Routine(id="routine-9", name="Leitura")
+    hass.states.async_set(
+        "light.tuya_lamp", "on", {"friendly_name": "Lâmpada 1 da sala"}
+    )
     response = await _call(
         hass,
         "create_routine",
@@ -377,6 +380,7 @@ async def test_create_routine(hass: HomeAssistant, mock_client: MagicMock) -> No
         actions=[
             {"device": "lâmpada 1 da sala", "action": "brightness", "value": 40},
             {"device": OLD_LAMP, "action": "turn_off"},
+            {"device": "light.tuya_lamp", "action": "turn_on"},
             {"speak": "Boa leitura"},
             {"type": "Alexa.Weather.Play", "operationPayload": {}},
         ],
@@ -388,7 +392,8 @@ async def test_create_routine(hass: HomeAssistant, mock_client: MagicMock) -> No
         "phrases": ["modo leitura"],
         "enabled": True,
     }
-    lamp, old, speak, raw = nodes
+    lamp, old, tuya, speak, raw = nodes
+    assert tuya["operationPayload"]["target"] == "11111111-2222-3333-4444-555555555555"
     assert lamp["operationPayload"] == {
         "operations": [{"type": "setBrightness", "brightness": 40}],
         "target": "11111111-2222-3333-4444-555555555555",

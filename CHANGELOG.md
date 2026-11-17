@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 - 2026-11-16
+
+- Routine actions accept any Home Assistant entity as `device` (a Tuya lamp, for instance): it is matched by name to the Alexa device. Before, only this integration's own smart-home entities were understood.
+
 ## 0.4.0 - 2026-11-16
 
 - New actions `create_routine`, `update_routine` and `delete_routine`: build an Alexa routine from phrases and actions (devices by name, entity or id; speak; raw nodes), change its name, phrases, actions or status, swap a replaced device in every action (`replace_devices`), or delete it. Neither Alexa Media Player nor the core integration can change routines. The request format was taken from the Alexa app and verified live: a throwaway routine was created, edited and deleted, and seven real routines that pointed at removed devices were repaired. Requires `python-amazon-echo` 0.4.0.

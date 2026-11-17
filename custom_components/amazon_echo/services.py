@@ -303,6 +303,9 @@ def _endpoint_id(hass: HomeAssistant, endpoints: list[Endpoint], value: str) -> 
         return value
     if (entry := er.async_get(hass).async_get(value)) and entry.platform == DOMAIN:
         return entry.unique_id.split("_", 1)[0]
+    if state := hass.states.get(value):
+        # an entity of another integration: the Alexa device of the same name
+        value = state.name
     matches = [e.id for e in endpoints if e.name.casefold() == value.casefold()]
     if len(matches) != 1:
         raise _error("smart_home_device_not_found", device=value)
