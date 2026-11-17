@@ -1,13 +1,17 @@
+<p align="center">
+  <img src="custom_components/amazon_echo/brand/logo@2x.png" alt="Amazon Echo" height="128">
+</p>
+
 # Amazon Echo for Home Assistant
 
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
-[![Release](https://img.shields.io/github/v/release/hudsonbrendon/ha-amazon-echo)](https://github.com/hudsonbrendon/ha-amazon-echo/releases)
 [![Tests](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/tests.yml/badge.svg)](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/tests.yml)
-[![hassfest](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/hassfest.yml/badge.svg)](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/hassfest.yml)
-[![Validate](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/validate.yml/badge.svg)](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/validate.yml)
+[![Hassfest](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/hassfest.yml/badge.svg)](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/hassfest.yml)
+[![HACS](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/validate.yml/badge.svg)](https://github.com/hudsonbrendon/ha-amazon-echo/actions/workflows/validate.yml)
+[![Release](https://img.shields.io/github/v/release/hudsonbrendon/ha-amazon-echo?sort=semver)](https://github.com/hudsonbrendon/ha-amazon-echo/releases)
+[![Downloads](https://img.shields.io/github/downloads/hudsonbrendon/ha-amazon-echo/total)](https://github.com/hudsonbrendon/ha-amazon-echo/releases)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.10.0%2B-18BCF2?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![License](https://img.shields.io/github/license/hudsonbrendon/ha-amazon-echo)](LICENSE)
-
-<img src="assets/amazon-echo.png" alt="Amazon Echo" width="96" align="right">
 
 Echo, Echo Show, Fire TV, Fire tablets, Echo Buds and multi-room speaker
 groups in Home Assistant, through
@@ -94,6 +98,9 @@ next poll when there is no push. Turning the option off removes the devices
 again.
 
 ## Installation
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=hudsonbrendon&repository=ha-amazon-echo&category=integration)
+[![Add integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=amazon_echo)
 
 1. HACS → Integrations → ⋮ → *Custom repositories* → add
    `https://github.com/hudsonbrendon/ha-amazon-echo` as *Integration*.
